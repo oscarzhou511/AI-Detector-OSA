@@ -25,7 +25,7 @@ Now, run:
 python ai_detector_server.py
 ```
 ## Setting up the UI
-Open the index.html file in any browser you like. Alternatively, you can open it from a command in the Terminal in the directory:
+Open the index.html file or visit [here](https://oscarzhou511.github.io/AI-Detector-OSA/) in any browser you like. Alternatively, you can open it from a command in the Terminal in the directory:
 ```
 open index.html
 ```
