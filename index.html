@@ -564,7 +564,7 @@
                 progressBar.style.strokeDashoffset = circumference - (humanityScore / 100) * circumference;
                 let summary = "The analysis suggests this text is likely human-written.";
                 if (humanityScore < 25) summary = "The analysis strongly suggests this text is AI-generated.";
-                else if (humanityScore < 60) summary = "This text shows a mix of human and AI-like characteristics.";
+                else if (humanityScore < 60) summary = "This text shows a mix of human and AI-like characteristics. There may have been some adversarial techniques like AI humanisers.";
                 document.getElementById('summary-text').textContent = summary;
                 if (data.linguistics) {
                     updateStatCard('perplexity', data.linguistics.perplexity);
