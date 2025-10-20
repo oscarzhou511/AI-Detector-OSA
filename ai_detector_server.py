@@ -15,7 +15,8 @@ def check_and_download_nltk_data():
     print("Checking for required NLTK data...")
     for package in required_packages:
         try:
-            nltk.data.find(f'tokenizers/{package}')
+            # Note: No need for 'tokenizers/' prefix with newer nltk.data.find
+            nltk.data.find(f'tokenizers/{package}.zip')
             print(f"  - NLTK package '{package}' already installed.")
         except LookupError:
             print(f"  - NLTK package '{package}' not found. Downloading...")
@@ -70,59 +71,19 @@ class LinguisticAnalyzer:
         return { "readability_grade": round(readability_grade, 1), "sentence_length_variation": round(len_std_dev, 2), "lexical_richness": round(lexical_richness, 2), "perplexity": round(perplexity, 1) }
 
 # ==============================================================================
-#  DETECTOR 1: Logit-based Highlighting (Unchanged)
+#  DETECTOR 1: Logit-based Model (Now primarily for Perplexity)
 # ==============================================================================
 class LogitDetector:
+    # This class is now primarily used to load a causal LM for the LinguisticAnalyzer's perplexity calculation.
+    # Its own `detect` method is no longer used for highlighting in the CombinedDetector.
     def __init__(self, model_name, device=DEVICE):
-        print(f"Initializing LogitDetector with '{model_name}'...")
+        print(f"Initializing LogitDetector with '{model_name}' (for perplexity calculation)...")
         self.device = device
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.sent_tokenizer = nltk_load('tokenizers/punkt/english.pickle')
         self.model.eval()
         print("LogitDetector initialized.")
-
-    def _get_top_k_logits(self, input_ids_batch, top_k):
-        with torch.no_grad():
-            logits = self.model(input_ids_batch).logits
-        last_token_logits = logits[:, -1, :]
-        return torch.topk(last_token_logits, top_k, dim=-1).indices
-
-    def _create_sentence_chunks(self, text, all_flagged_indices):
-        flagged_indices_set = set(all_flagged_indices)
-        sentence_spans = self.sent_tokenizer.span_tokenize(text)
-        chunks = []
-        global_token_offset = 0
-        for start, end in sentence_spans:
-            sentence_text = text[start:end]
-            if not sentence_text.strip(): continue
-            sentence_token_ids = self.tokenizer.encode(sentence_text, add_special_tokens=False)
-            num_tokens_in_sentence = len(sentence_token_ids)
-            if num_tokens_in_sentence == 0: continue
-            flagged_count = sum(1 for i in range(num_tokens_in_sentence) if (global_token_offset + i) in flagged_indices_set)
-            ai_percentage = (flagged_count / num_tokens_in_sentence) * 100
-            sentence_type = 'AI' if ai_percentage > 60 else 'Human'
-            chunks.append({"text": sentence_text, "type": sentence_type})
-            global_token_offset += num_tokens_in_sentence
-        return chunks
-
-    def detect(self, text, top_k=10, batch_size=32, context_window=10):
-        all_tokens = self.tokenizer.encode(text, add_special_tokens=False)
-        if len(all_tokens) <= context_window:
-            return [{"text": text, "type": "Human"}]
-        input_sequences, target_tokens = [], []
-        for i in range(len(all_tokens) - context_window):
-            input_sequences.append(all_tokens[i : i + context_window])
-            target_tokens.append(all_tokens[i + context_window])
-        all_flagged_indices = []
-        for i in tqdm(range(0, len(input_sequences), batch_size), desc="Logit Analysis", leave=False):
-            batch_start, batch_end = i, i + batch_size
-            input_ids_batch = torch.tensor(input_sequences[batch_start:batch_end]).to(self.device)
-            top_k_preds_batch = self._get_top_k_logits(input_ids_batch, top_k)
-            for j, top_k_preds in enumerate(top_k_preds_batch):
-                if target_tokens[batch_start + j] in top_k_preds:
-                    all_flagged_indices.append(batch_start + j + context_window)
-        return self._create_sentence_chunks(text, all_flagged_indices)
+    # The original 'detect' method is kept here but is no longer called by the main pipeline.
 
 # ==============================================================================
 #  DETECTOR 2: Classifier-based Detection (Unchanged)
@@ -152,7 +113,7 @@ class ClassifierDetector:
         self.model = DesklibAIDetectionModel.from_pretrained(model_dir).to(self.device)
         self.model.eval()
         print("ClassifierDetector initialized.")
-    def detect(self, text, max_len=768):
+    def detect(self, text, max_len=512): # <<< MODIFIED: Reduced max_len for sentence-level speed
         encoded = self.tokenizer(text, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt')
         input_ids = encoded['input_ids'].to(self.device)
         attention_mask = encoded['attention_mask'].to(self.device)
@@ -162,68 +123,108 @@ class ClassifierDetector:
         return probability
 
 # ==============================================================================
-#  COMBINED DETECTOR: NOW WITH ENSEMBLE METHOD
+#  <<< NEW CLASS: Desklib-based Highlighting System
+# ==============================================================================
+class DesklibHighlighter:
+    def __init__(self, classifier_detector):
+        """
+        Initializes the highlighter with a pre-loaded ClassifierDetector instance.
+        """
+        self.classifier = classifier_detector
+        print("DesklibHighlighter initialized.")
+
+    def highlight(self, text, threshold=0.65):
+        """
+        Analyzes text sentence by sentence using the Desklib classifier to generate highlighting chunks.
+
+        Args:
+            text (str): The input text to analyze.
+            threshold (float): The probability threshold above which a sentence is marked as 'AI'.
+
+        Returns:
+            list: A list of dictionaries, e.g., [{"text": "...", "type": "AI"}, ...].
+        """
+        sentences = sent_tokenize(text)
+        if not sentences:
+            return []
+
+        chunks = []
+        for sentence in tqdm(sentences, desc="Highlighting Analysis", leave=False):
+            if not sentence.strip():
+                continue
+            
+            # Get AI probability for the individual sentence
+            prob = self.classifier.detect(sentence)
+            
+            sentence_type = 'AI' if prob > threshold else 'Human'
+            chunks.append({"text": sentence, "type": sentence_type})
+        
+        return chunks
+
+
+# ==============================================================================
+#  COMBINED DETECTOR: NOW WITH DESKLIB HIGHLIGHTING
 # ==============================================================================
 class CombinedDetector:
     def __init__(self):
         logit_model_path = "./models/distilgpt2"
         classifier_model_path = "./models/desklib-detector"
-        print(f"Loading LogitDetector from local path: {logit_model_path}")
+        
+        # <<< MODIFIED: LogitDetector is now only for perplexity
+        print(f"Loading LogitDetector from local path: {logit_model_path} (for perplexity)")
         self.logit_detector = LogitDetector(model_name=logit_model_path)
+        
         print(f"Loading ClassifierDetector from local path: {classifier_model_path}")
         self.classifier_detector = ClassifierDetector(model_dir=classifier_model_path)
+        
+        # <<< MODIFIED: Initialize the new DesklibHighlighter
+        self.desklib_highlighter = DesklibHighlighter(self.classifier_detector)
+
         self.linguistic_analyzer = LinguisticAnalyzer(perplexity_model=self.logit_detector.model, perplexity_tokenizer=self.logit_detector.tokenizer, device=DEVICE)
 
     def _calculate_ensemble_score(self, desklib_prob, highlight_chunks, linguistic_stats):
         """
-        Calculates a final AI score using a weighted ensemble of three different methods.
-        
-        1. Desklib Classifier Score: Direct AI probability from the fine-tuned model. Highest weight.
-        2. DistilGPT-2 Logit Score: Probability derived from the proportion of text flagged as AI.
-        3. Linguistic Score: Score based on perplexity and "burstiness" (sentence length variation).
-        
-        Returns the final weighted probability and a dictionary of the component scores.
+        Calculates a final AI score using a weighted ensemble.
+        Highlighting score is now derived from the Desklib highlighter's output.
         """
         # --- Component 1: Desklib Score (Highest Weight) ---
         score_desklib = desklib_prob
 
-        # --- Component 2: DistilGPT-2 Logit Score (Second Highest Weight) ---
+        # --- Component 2: Highlighting Score (Based on Desklib sentence analysis) ---
+        # <<< MODIFIED: This score is now also based on Desklib, but at a sentence level.
         ai_char_count = sum(len(c['text']) for c in highlight_chunks if c['type'] == 'AI')
         total_char_count = sum(len(c['text']) for c in highlight_chunks)
-        score_distilgpt2 = (ai_char_count / total_char_count) if total_char_count > 0 else 0.0
+        score_highlighting = (ai_char_count / total_char_count) if total_char_count > 0 else 0.0
 
-        # --- Component 3: Linguistic Feature Score (Third Highest Weight) ---
+        # --- Component 3: Linguistic Feature Score ---
         score_linguistic = 0.0
         if linguistic_stats:
-            # Perplexity component: Lower perplexity is more AI-like.
-            # Map a perplexity range of [40, 100] to a score of [1.0, 0.0].
-            perplexity = linguistic_stats.get('perplexity', 100) # Default to human-like
+            perplexity = linguistic_stats.get('perplexity', 100)
             perplexity_score = 1.0 - ((perplexity - 40) / (100 - 40))
             perplexity_score = np.clip(perplexity_score, 0, 1)
 
-            # Burstiness component: Lower sentence length variation is more AI-like.
-            # Map a variation range of [2, 8] to a score of [1.0, 0.0].
-            sent_variation = linguistic_stats.get('sentence_length_variation', 8) # Default to human-like
+            sent_variation = linguistic_stats.get('sentence_length_variation', 8)
             burstiness_score = 1.0 - ((sent_variation - 2) / (8 - 2))
             burstiness_score = np.clip(burstiness_score, 0, 1)
 
             score_linguistic = (perplexity_score + burstiness_score) / 2.0
         
-        # --- Ensemble Weights ---
+        # --- Ensemble Weights (Adjusted for new highlighting source) ---
+        # <<< MODIFIED: Renamed weights for clarity. Values can be tweaked.
         W_DESKLIB = 0.60
-        W_DISTILGPT2 = 0.25
+        W_HIGHLIGHT = 0.25 # This is the sentence-by-sentence desklib score
         W_LINGUISTIC = 0.15
 
         # --- Final Weighted Score ---
         final_score = (W_DESKLIB * score_desklib) + \
-                      (W_DISTILGPT2 * score_distilgpt2) + \
+                      (W_HIGHLIGHT * score_highlighting) + \
                       (W_LINGUISTIC * score_linguistic)
         
         component_scores = {
-            "desklib_score": round(score_desklib, 4),
-            "distilgpt2_logit_score": round(score_distilgpt2, 4),
+            "desklib_overall_score": round(score_desklib, 4),
+            "desklib_highlighting_score": round(score_highlighting, 4),
             "linguistic_feature_score": round(score_linguistic, 4),
-            "weights": {"desklib": W_DESKLIB, "distilgpt2": W_DISTILGPT2, "linguistic": W_LINGUISTIC}
+            "weights": {"desklib_overall": W_DESKLIB, "desklib_highlighting": W_HIGHLIGHT, "linguistic": W_LINGUISTIC}
         }
         return final_score, component_scores
 
@@ -231,8 +232,14 @@ class CombinedDetector:
         print("\n--- Starting New Analysis ---")
         
         # --- Step 1: Run all individual detectors ---
-        desklib_prob = self.classifier_detector.detect(text)
-        highlight_chunks = self.logit_detector.detect(text)
+        # Get overall probability from the classifier
+        desklib_prob = self.classifier_detector.detect(text, max_len=768) # Use longer context for overall score
+        
+        # <<< MODIFIED: Use the new highlighter
+        # Generate sentence-level highlights using the classifier
+        highlight_chunks = self.desklib_highlighter.highlight(text)
+        
+        # Get linguistic stats (still uses the logit model for perplexity)
         linguistic_stats = self.linguistic_analyzer.analyze(text)
         
         # --- Step 2: Calculate the new ensemble score ---
