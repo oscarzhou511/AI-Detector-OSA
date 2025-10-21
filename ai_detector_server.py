@@ -301,11 +301,18 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(HTTPStatus.NOT_FOUND)
             self.end_headers()
 
+import socket
+
+class DualStackServer(socketserver.TCPServer):
+    allow_reuse_address = True
+    address_family = socket.AF_INET6  # 👈 enable IPv6 support
+
 def run_server(port=8000):
-    with socketserver.TCPServer(("", port), AIRequestHandler) as httpd:
-        print(f"Serving at http://localhost:{port}")
-        print("Open the ai_detector_ui.html file in your browser to use the tool.")
-        print("Press Ctrl+C to stop the server.")
+    with DualStackServer(("", port), AIRequestHandler) as httpd:
+        print(f"✅ Serving at http://[::]:{port} (IPv6 + IPv4)")
+        print("Try visiting:")
+        print("  • http://localhost:8000")
+        print("  • http://[2403:580d:1ab4:0:20b2:6b1c:5a7e:c7a3]:8000 (from outside, if port open)")
         httpd.serve_forever()
 
 if __name__ == "__main__":
