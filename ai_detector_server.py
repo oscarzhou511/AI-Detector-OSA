@@ -86,12 +86,16 @@ def decrypt_payload(payload):
     encrypted_aes_key_bytes = base64.b64decode(encrypted_aes_key_b64)
 
     # Note: JSEncrypt sends the AES key itself as base64, so we must decode that first.
-    decrypted_aes_key_b64 = PRIVATE_KEY.decrypt(
+    decrypted_aes_key_raw = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
-        padding.PKCS1v15() # <-- This is the correct padding to match JSEncrypt
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
     )
     
-    aes_key_bytes = base64.b64decode(decrypted_aes_key_b64)
+    aes_key_bytes = decrypted_aes_key_raw
 
     # --- Step 2: Decrypt the text with AES-GCM ---
     iv_b64 = payload['iv']
