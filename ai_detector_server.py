@@ -88,12 +88,9 @@ def decrypt_payload(payload):
     # Note: JSEncrypt sends the AES key itself as base64, so we must decode that first.
     decrypted_aes_key_b64 = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA1()), # <-- CORRECT
-            algorithm=hashes.SHA1(),                  # <-- CORRECT
-            label=None
-        )
+        padding.PKCS1v15() # <-- This is the correct padding to match JSEncrypt
     )
+    
     aes_key_bytes = base64.b64decode(decrypted_aes_key_b64)
 
     # --- Step 2: Decrypt the text with AES-GCM ---
