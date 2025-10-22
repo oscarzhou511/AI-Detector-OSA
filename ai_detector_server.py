@@ -89,8 +89,8 @@ def decrypt_payload(payload):
     decrypted_aes_key_b64 = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
         padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA1()), # JSEncrypt default is SHA1
-            algorithm=hashes.SHA1(),
+            mgf=padding.MGF1(algorithm=hashes.SHA1()), # <-- CORRECT
+            algorithm=hashes.SHA1(),                  # <-- CORRECT
             label=None
         )
     )
