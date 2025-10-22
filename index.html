@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- JSEncrypt library for client-side RSA encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
 
     <style>
         :root {
@@ -523,29 +525,71 @@
         </main>
     </div>
     <script>
-        // --- JavaScript is unchanged from the previous version ---
         document.addEventListener('DOMContentLoaded', () => {
+            // --- START: ENCRYPTION SETUP ---
+            // This is the public key corresponding to the private key on the server.
+            // Text is encrypted with this key on the client, and can only be decrypted
+            // by the server, which holds the private key.
+            const publicKey = `-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2YlQJJaB9O3X91mYfk9z
+3U0Zt4oC95TXVV8omGmCpeNc53Z392oXhkrWkzUsae90BWO2ORqtT9e/+OMW2I9e
+zCUD6a82VwxxQXgt+uwgY1FfuZP3vARtdGrmiepcJ1XakiMhjs2Lw0BSs9BSCAo9
+pOSvqV3osG97bug9BkacAPl/b1RxXcYoX0xnWN+WmwJtNQrd5twr8DS5MrdEX37l
+J9MgD0m1Iby1sGwgvy0IFIb1bU2pbVp+jUoHrYX/dcmRb+VwgquuTyTsU1ktfqHX
+AFxQpnTdhNC0thzWC4vc7PPCSQX6uFyJoH0fK+ezYcnhmOXX2J70KGUVV0KWW37c
+UJl+xmTs/4hFLDQOUNoyIdOVmAkbmGawjpZPFSGtcy1R8sMgNm1aH+UlfvT7d5ky
+xZ3mYjRebtIdcGp1ByqIRkHz+NIIO7UeKlBdGDHZxZl2gqA7teJyLRadF8xTnl84
+yx5pLDdMjPPZZk8GQXtuO9lQAK2W/Xsks8qNdMvPUhEyn3JamiHOVJRJEERvsrEL
+IZWSunkh8ysj6EW9vm5HzjZiTLdS+EtfNS6nAFkKSD2ythirxm9reDTvUK5pzTdM
+mup25IPUoJIynx1AIhURGN9pFo96dTsjEGTuQDTGWsMdvk6WXQgQyVKEBelCrTvW
+FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
+-----END PUBLIC KEY-----`;
+            // --- END: ENCRYPTION SETUP ---
+
             const textInput = document.getElementById('text-input');
             const checkButton = document.getElementById('check-button');
             const resultsArea = document.getElementById('results-area');
+
             checkButton.addEventListener('click', handleAnalysis);
+
             textInput.addEventListener('input', () => {
                 const text = textInput.value.trim();
                 document.getElementById('word-count').textContent = `${text.split(/\s+/).filter(Boolean).length} words`;
             });
+
             async function handleAnalysis() {
-                if (textInput.value.trim().length < 50) {
+                const rawText = textInput.value.trim();
+                if (rawText.length < 50) {
                     showError("Please enter at least 50 characters for an accurate analysis.");
                     return;
                 }
                 setLoadingState(true);
                 hideError();
                 resultsArea.classList.remove('visible');
+
+                // --- START: ENCRYPTION LOGIC ---
+                let encryptedText;
                 try {
-                    const response = await fetch('http://localhost:8000/detect', {
+                    const encrypt = new JSEncrypt();
+                    encrypt.setPublicKey(publicKey);
+                    encryptedText = encrypt.encrypt(rawText);
+                    if (!encryptedText) {
+                        throw new Error("Encryption failed. The text might be too long or contain invalid characters.");
+                    }
+                } catch (error) {
+                    console.error('Encryption failed:', error);
+                    showError("Could not encrypt your text before sending. This may be a browser compatibility issue.");
+                    setLoadingState(false);
+                    return;
+                }
+                // --- END: ENCRYPTION LOGIC ---
+
+                try {
+                    const response = await fetch('http://ai-detect.oscarz.dev/detect', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: textInput.value.trim() })
+                        // Send the encrypted text instead of the raw text
+                        body: JSON.stringify({ encrypted_text: encryptedText })
                     });
                     if (!response.ok) throw new Error((await response.json()).error || 'Server Error');
                     displayResults(await response.json());
