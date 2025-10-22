@@ -9,12 +9,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- JSEncrypt is NO LONGER NEEDED -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script> -->
     <style>
-        /* CSS is unchanged */
         :root {
-            --bg-color: #12121f; --surface-color: #1e1e32; --primary-color: #8a42ff; --primary-glow: rgba(138, 66, 255, 0.4); --secondary-color: #4b4b7f; --text-color: #e0e0e0; --text-muted-color: #a0a0c0; --border-color: #33334d; --ai-highlight: rgba(255, 82, 122, 0.15); --ai-highlight-border: #ff527a; --human-highlight: rgba(29, 201, 164, 0.15); --human-highlight-border: #1dc9a4; --rating-high: #1dc9a4; --rating-medium: #ffc107; --rating-low: #ff527a;
+            --bg-color: #12121f;
+            --surface-color: #1e1e32;
+            --primary-color: #8a42ff;
+            --primary-glow: rgba(138, 66, 255, 0.4);
+            --secondary-color: #4b4b7f;
+            --text-color: #e0e0e0;
+            --text-muted-color: #a0a0c0;
+            --border-color: #33334d;
+            --ai-highlight: rgba(255, 82, 122, 0.15);
+            --ai-highlight-border: #ff527a;
+            --human-highlight: rgba(29, 201, 164, 0.15);
+            --human-highlight-border: #1dc9a4;
+            --rating-high: #1dc9a4;
+            --rating-medium: #ffc107;
+            --rating-low: #ff527a;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -82,16 +93,95 @@
 </head>
 
 <body>
-    <!-- HTML Body is unchanged -->
     <div class="container">
-        <header class="header"><!-- ... --></header>
+        <header class="header">
+            <h1><i class="fa-solid fa-robot" style="color: var(--primary-color);"></i> Efficient AI Text Detector</h1>
+            <p>Fully Private, Efficient, and Accurate</p>
+        </header>
         <main>
-            <div class="card"><!-- ... --></div>
+            <div class="card">
+                <div class="input-area">
+                    <textarea id="text-input"
+                        placeholder="Paste your text here... It is recommended to have a minimum of 300 words for an accurate scan."></textarea>
+                    <div class="controls">
+                        <div id="word-count">0 words</div>
+                        <button id="check-button"><i class="fa-solid fa-wand-magic-sparkles"></i> <span
+                                id="button-text">Analyze Text</span></button>
+                    </div>
+                </div>
+            </div>
             <div id="error-message"></div>
-            <div id="results-area" class="card"><!-- ... (Full results HTML here) --></div>
+            
+            <div id="results-area" class="card">
+                <div class="summary-grid">
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 120 120">
+                            <circle class="progress-bg" cx="60" cy="60" r="54"></circle>
+                            <circle id="progress-bar" class="progress-bar" cx="60" cy="60" r="54"></circle>
+                        </svg>
+                        <div class="progress-text"><span id="overall-score">--%</span><span class="progress-label">Human
+                                Score</span></div>
+                    </div>
+                    <div class="stats">
+                        <h3>Analysis Complete</h3>
+                        <p id="summary-text">The text has been analyzed. See the highlighted results and linguistic
+                            dashboard below.</p>
+                    </div>
+                </div>
+                <div class="stats-dashboard">
+                    <div class="stat-card" id="stat-card-perplexity"
+                        title="Perplexity measures how predictable the text is. Human writing is often less predictable (higher perplexity) than AI-generated text.">
+                        <div class="stat-header"><span class="stat-label">Predictability</span><span
+                                class="stat-rating">--</span></div>
+                        <div class="stat-value">--</div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-card-variation"
+                        title="Measures the variation in sentence length. Humans tend to mix short and long sentences (high variation), while AI often writes sentences of similar length (low variation).">
+                        <div class="stat-header"><span class="stat-label">Burstiness</span><span
+                                class="stat-rating">--</span></div>
+                        <div class="stat-value">--</div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-card-readability"
+                        title="Estimates the U.S. school grade level needed to understand the text. AI often targets a middle-school to high-school range.">
+                        <div class="stat-header"><span class="stat-label">Readability</span><span
+                                class="stat-rating">--</span></div>
+                        <div class="stat-value">--</div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-card-lexical"
+                        title="Measures the ratio of unique words to total words. A higher value indicates a richer vocabulary.">
+                        <div class="stat-header"><span class="stat-label">Vocabulary</span><span
+                                class="stat-rating">--</span></div>
+                        <div class="stat-value">--</div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-output-container">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--human-highlight-border);"></div>
+                            <span>Likely Human-Written</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--ai-highlight-border);"></div>
+                            <span>Likely AI-Generated</span>
+                        </div>
+                    </div>
+                    <div id="highlighted-text" class="text-output"></div>
+                </div>
+            </div>
         </main>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Public key remains the same
