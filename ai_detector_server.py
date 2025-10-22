@@ -82,20 +82,26 @@ def decrypt_payload(payload):
         raise ConnectionAbortedError("Server private key is not loaded.")
 
     # --- Step 1: Decrypt the AES key with RSA ---
+    # The client RSA-encrypts a Base64 string of the AES key.
+    # So, the payload['encrypted_key'] is a Base64 string of the ciphertext.
     encrypted_aes_key_b64 = payload['encrypted_key']
     encrypted_aes_key_bytes = base64.b64decode(encrypted_aes_key_b64)
 
-    # The client encrypts a base64 representation of the AES key. After decryption,
-    # we get this base64 string back, which we then decode to get the raw key.
-    decrypted_aes_key_b64_bytes = PRIVATE_KEY.decrypt(
+    # Decrypt the ciphertext. The result is the original plaintext, which was
+    # the Base64-encoded AES key. The result is a bytes object (e.g., b'Abc...=').
+    # A failure here raises ValueError("Decryption failed").
+    decrypted_b64_aes_key_bytes = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
         padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()), # FIX: JSEncrypt v3+ uses SHA-256 by default
-            algorithm=hashes.SHA256(),                   # FIX: Align hashing algorithm with client
+            mgf=padding.MGF1(algorithm=hashes.SHA256()), # FIX: JSEncrypt v3+ uses SHA-256 by default.
+            algorithm=hashes.SHA256(),                   # FIX: Must match the client's default.
             label=None
         )
     )
-    aes_key_bytes = base64.b64decode(decrypted_aes_key_b64_bytes)
+    
+    # Now, Base64-decode the result to get the raw AES key.
+    aes_key_bytes = base64.b64decode(decrypted_b64_aes_key_bytes)
+
 
     # --- Step 2: Decrypt the text with AES-GCM ---
     iv_b64 = payload['iv']
