@@ -550,6 +550,16 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 return window.btoa(binary);
             }
 
+            function base64ToArrayBuffer(base64) {
+                const binary_string = window.atob(base64);
+                const len = binary_string.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binary_string.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
             async function handleAnalysis() {
                 const rawText = textInput.value.trim();
                 if (rawText.length < 50) {
@@ -559,14 +569,14 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 setLoadingState(true);
                 hideError();
                 resultsArea.classList.remove('visible');
-
+    
                 try {
                     // --- START: HYBRID ENCRYPTION LOGIC ---
                     
-                    // 1. Generate a new, random AES-GCM key for this message only.
+                    // 1. Generate AES-GCM key. This 'aesKey' object is what we'll reuse.
                     const aesKey = await window.crypto.subtle.generateKey(
                         { name: "AES-GCM", length: 256 },
-                        true, // can be exported
+                        true, 
                         ["encrypt", "decrypt"]
                     );
 
@@ -607,10 +617,27 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
-                    if (!response.ok) throw new Error((await response.json()).error || 'Server Error');
-                    displayResults(await response.json());
-
+                    
+                    const response_payload = await response.json();
+                    if (!response.ok) throw new Error(response_payload.error || 'Server Error');
+    
+                    // --- START: DECRYPT THE RESPONSE ---
+                    const iv_response = base64ToArrayBuffer(response_payload.iv);
+                    const encrypted_response = base64ToArrayBuffer(response_payload.encrypted_response);
+    
+                    const decrypted_buffer = await window.crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: iv_response },
+                        aesKey, // Reusing the key from the beginning of the request
+                        encrypted_response
+                    );
+    
+                    const textDecoder = new TextDecoder();
+                    const decrypted_json_string = textDecoder.decode(decrypted_buffer);
+                    const final_results = JSON.parse(decrypted_json_string);
+                    // --- END: DECRYPT THE RESPONSE ---
+    
+                    displayResults(final_results); // Pass the decrypted results to be displayed
+    
                 } catch (error) {
                     console.error('Analysis failed:', error);
                     showError(`An error occurred: ${error.message}. Please check the console for details.`);
