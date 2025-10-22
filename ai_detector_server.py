@@ -92,11 +92,7 @@ def decrypt_payload(payload):
     # A failure here raises ValueError("Decryption failed").
     decrypted_b64_aes_key_bytes = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA1()), # FIX: JSEncrypt v3.x defaults to SHA-1 for OAEP encryption padding.
-            algorithm=hashes.SHA1(),                   # FIX: Must match the client's default.
-            label=None
-        )
+        padding.PKCS1v15()
     )
     
     # Now, Base64-decode the result to get the raw AES key.
