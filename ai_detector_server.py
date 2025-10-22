@@ -7,6 +7,20 @@ import http.server
 import socketserver
 from http import HTTPStatus
 import numpy as np
+import socket
+from pathlib import Path
+import base64
+
+# --- START: Import modules for decryption ---
+try:
+    from cryptography.hazmat.primitives import serialization, hashes
+    from cryptography.hazmat.primitives.asymmetric import padding
+except ImportError:
+    print("\n❌ Missing dependency: 'cryptography'. Please install it by running:")
+    print("   pip install cryptography")
+    exit(1)
+# --- END: Import modules for decryption ---
+
 
 # --- Self-healing NLTK Data Check ---
 import nltk
@@ -15,7 +29,6 @@ def check_and_download_nltk_data():
     print("Checking for required NLTK data...")
     for package in required_packages:
         try:
-            # Note: No need for 'tokenizers/' prefix with newer nltk.data.find
             nltk.data.find(f'tokenizers/{package}.zip')
             print(f"  - NLTK package '{package}' already installed.")
         except LookupError:
@@ -27,7 +40,6 @@ check_and_download_nltk_data()
 
 import textstat
 from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.data import load as nltk_load # For span_tokenize
 
 # --- Device Setup ---
 def get_optimal_device():
@@ -41,6 +53,58 @@ def get_optimal_device():
         print("No GPU acceleration available. Using CPU.")
         return torch.device("cpu")
 DEVICE = get_optimal_device()
+
+# ==============================================================================
+#  ENCRYPTION/DECRYPTION SETUP
+# ==============================================================================
+PRIVATE_KEY = None
+
+def load_private_key():
+    """Loads the RSA private key from 'private_key.pem' into a global variable."""
+    global PRIVATE_KEY
+    key_path = Path("private_key.pem")
+    if not key_path.exists():
+        print("\n❌ CRITICAL ERROR: 'private_key.pem' not found in the current directory.")
+        print("Please generate an RSA key pair and place the private key file here.")
+        exit(1)
+    
+    with open(key_path, "rb") as key_file:
+        try:
+            PRIVATE_KEY = serialization.load_pem_private_key(
+                key_file.read(),
+                password=None,
+            )
+            print("✅ Private key loaded successfully for request decryption.")
+        except Exception as e:
+            print(f"\n❌ CRITICAL ERROR: Failed to load 'private_key.pem'. Error: {e}")
+            print("Ensure the file is a valid, unencrypted PEM-formatted RSA private key.")
+            exit(1)
+
+def decrypt_text(encrypted_base64_text):
+    """Decrypts a base64 encoded, RSA-encrypted string."""
+    if not PRIVATE_KEY:
+        raise ConnectionAbortedError("Server private key is not loaded. Cannot decrypt.")
+    
+    encrypted_bytes = base64.b64decode(encrypted_base64_text)
+    
+    # Client-side JSEncrypt encrypts data in chunks of key_size/8 bytes.
+    # We must decrypt chunk by chunk and then join the results.
+    key_size_bytes = PRIVATE_KEY.key_size // 8
+    decrypted_chunks = []
+    
+    for i in range(0, len(encrypted_bytes), key_size_bytes):
+        chunk = encrypted_bytes[i:i + key_size_bytes]
+        decrypted_chunk = PRIVATE_KEY.decrypt(
+            chunk,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        decrypted_chunks.append(decrypted_chunk)
+        
+    return b''.join(decrypted_chunks).decode('utf-8')
 
 # ==============================================================================
 #  ADVANCED FEATURE: Linguistic Analyzer (Unchanged)
@@ -71,11 +135,9 @@ class LinguisticAnalyzer:
         return { "readability_grade": round(readability_grade, 1), "sentence_length_variation": round(len_std_dev, 2), "lexical_richness": round(lexical_richness, 2), "perplexity": round(perplexity, 1) }
 
 # ==============================================================================
-#  DETECTOR 1: Logit-based Model (Now primarily for Perplexity)
+#  DETECTOR 1: Logit-based Model (Unchanged)
 # ==============================================================================
 class LogitDetector:
-    # This class is now primarily used to load a causal LM for the LinguisticAnalyzer's perplexity calculation.
-    # Its own `detect` method is no longer used for highlighting in the CombinedDetector.
     def __init__(self, model_name, device=DEVICE):
         print(f"Initializing LogitDetector with '{model_name}' (for perplexity calculation)...")
         self.device = device
@@ -83,7 +145,6 @@ class LogitDetector:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model.eval()
         print("LogitDetector initialized.")
-    # The original 'detect' method is kept here but is no longer called by the main pipeline.
 
 # ==============================================================================
 #  DETECTOR 2: Classifier-based Detection (Unchanged)
@@ -113,7 +174,7 @@ class ClassifierDetector:
         self.model = DesklibAIDetectionModel.from_pretrained(model_dir).to(self.device)
         self.model.eval()
         print("ClassifierDetector initialized.")
-    def detect(self, text, max_len=512): # <<< MODIFIED: Reduced max_len for sentence-level speed
+    def detect(self, text, max_len=512):
         encoded = self.tokenizer(text, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt')
         input_ids = encoded['input_ids'].to(self.device)
         attention_mask = encoded['attention_mask'].to(self.device)
@@ -123,143 +184,65 @@ class ClassifierDetector:
         return probability
 
 # ==============================================================================
-#  <<< NEW CLASS: Desklib-based Highlighting System
+#  Desklib-based Highlighting System (Unchanged)
 # ==============================================================================
 class DesklibHighlighter:
     def __init__(self, classifier_detector):
-        """
-        Initializes the highlighter with a pre-loaded ClassifierDetector instance.
-        """
         self.classifier = classifier_detector
         print("DesklibHighlighter initialized.")
-
     def highlight(self, text, threshold=0.65):
-        """
-        Analyzes text sentence by sentence using the Desklib classifier to generate highlighting chunks.
-
-        Args:
-            text (str): The input text to analyze.
-            threshold (float): The probability threshold above which a sentence is marked as 'AI'.
-
-        Returns:
-            list: A list of dictionaries, e.g., [{"text": "...", "type": "AI"}, ...].
-        """
         sentences = sent_tokenize(text)
-        if not sentences:
-            return []
-
+        if not sentences: return []
         chunks = []
         for sentence in tqdm(sentences, desc="Highlighting Analysis", leave=False):
-            if not sentence.strip():
-                continue
-            
-            # Get AI probability for the individual sentence
+            if not sentence.strip(): continue
             prob = self.classifier.detect(sentence)
-            
             sentence_type = 'AI' if prob > threshold else 'Human'
             chunks.append({"text": sentence, "type": sentence_type})
-        
         return chunks
 
-
 # ==============================================================================
-#  COMBINED DETECTOR: NOW WITH DESKLIB HIGHLIGHTING
+#  Combined Detector (Unchanged)
 # ==============================================================================
 class CombinedDetector:
     def __init__(self):
         logit_model_path = "./models/distilgpt2"
         classifier_model_path = "./models/desklib-detector"
-        
-        # <<< MODIFIED: LogitDetector is now only for perplexity
         print(f"Loading LogitDetector from local path: {logit_model_path} (for perplexity)")
         self.logit_detector = LogitDetector(model_name=logit_model_path)
-        
         print(f"Loading ClassifierDetector from local path: {classifier_model_path}")
         self.classifier_detector = ClassifierDetector(model_dir=classifier_model_path)
-        
-        # <<< MODIFIED: Initialize the new DesklibHighlighter
         self.desklib_highlighter = DesklibHighlighter(self.classifier_detector)
-
         self.linguistic_analyzer = LinguisticAnalyzer(perplexity_model=self.logit_detector.model, perplexity_tokenizer=self.logit_detector.tokenizer, device=DEVICE)
-
     def _calculate_ensemble_score(self, desklib_prob, highlight_chunks, linguistic_stats):
-        """
-        Calculates a final AI score using a weighted ensemble.
-        Highlighting score is now derived from the Desklib highlighter's output.
-        """
-        # --- Component 1: Desklib Score (Highest Weight) ---
         score_desklib = desklib_prob
-
-        # --- Component 2: Highlighting Score (Based on Desklib sentence analysis) ---
-        # <<< MODIFIED: This score is now also based on Desklib, but at a sentence level.
         ai_char_count = sum(len(c['text']) for c in highlight_chunks if c['type'] == 'AI')
         total_char_count = sum(len(c['text']) for c in highlight_chunks)
         score_highlighting = (ai_char_count / total_char_count) if total_char_count > 0 else 0.0
-
-        # --- Component 3: Linguistic Feature Score ---
         score_linguistic = 0.0
         if linguistic_stats:
             perplexity = linguistic_stats.get('perplexity', 100)
             perplexity_score = 1.0 - ((perplexity - 40) / (100 - 40))
             perplexity_score = np.clip(perplexity_score, 0, 1)
-
             sent_variation = linguistic_stats.get('sentence_length_variation', 8)
             burstiness_score = 1.0 - ((sent_variation - 2) / (8 - 2))
             burstiness_score = np.clip(burstiness_score, 0, 1)
-
             score_linguistic = (perplexity_score + burstiness_score) / 2.0
-        
-        # --- Ensemble Weights (Adjusted for new highlighting source) ---
-        # <<< MODIFIED: Renamed weights for clarity. Values can be tweaked.
-        W_DESKLIB = 0.60
-        W_HIGHLIGHT = 0.25 # This is the sentence-by-sentence desklib score
-        W_LINGUISTIC = 0.15
-
-        # --- Final Weighted Score ---
-        final_score = (W_DESKLIB * score_desklib) + \
-                      (W_HIGHLIGHT * score_highlighting) + \
-                      (W_LINGUISTIC * score_linguistic)
-        
-        component_scores = {
-            "desklib_overall_score": round(score_desklib, 4),
-            "desklib_highlighting_score": round(score_highlighting, 4),
-            "linguistic_feature_score": round(score_linguistic, 4),
-            "weights": {"desklib_overall": W_DESKLIB, "desklib_highlighting": W_HIGHLIGHT, "linguistic": W_LINGUISTIC}
-        }
+        W_DESKLIB, W_HIGHLIGHT, W_LINGUISTIC = 0.60, 0.25, 0.15
+        final_score = (W_DESKLIB * score_desklib) + (W_HIGHLIGHT * score_highlighting) + (W_LINGUISTIC * score_linguistic)
+        component_scores = {"desklib_overall_score": round(score_desklib, 4), "desklib_highlighting_score": round(score_highlighting, 4), "linguistic_feature_score": round(score_linguistic, 4), "weights": {"desklib_overall": W_DESKLIB, "desklib_highlighting": W_HIGHLIGHT, "linguistic": W_LINGUISTIC}}
         return final_score, component_scores
-
     def detect(self, text):
         print("\n--- Starting New Analysis ---")
-        
-        # --- Step 1: Run all individual detectors ---
-        # Get overall probability from the classifier
-        desklib_prob = self.classifier_detector.detect(text, max_len=768) # Use longer context for overall score
-        
-        # <<< MODIFIED: Use the new highlighter
-        # Generate sentence-level highlights using the classifier
+        desklib_prob = self.classifier_detector.detect(text, max_len=768)
         highlight_chunks = self.desklib_highlighter.highlight(text)
-        
-        # Get linguistic stats (still uses the logit model for perplexity)
         linguistic_stats = self.linguistic_analyzer.analyze(text)
-        
-        # --- Step 2: Calculate the new ensemble score ---
-        final_prob, component_scores = self._calculate_ensemble_score(
-            desklib_prob=desklib_prob,
-            highlight_chunks=highlight_chunks,
-            linguistic_stats=linguistic_stats
-        )
-
-        # --- Step 3: Assemble the final result ---
-        result = { 
-            "overall_percentage": round(final_prob * 100, 2),
-            "component_scores": component_scores,
-            "chunks": highlight_chunks, 
-            "linguistics": linguistic_stats 
-        }
+        final_prob, component_scores = self._calculate_ensemble_score(desklib_prob=desklib_prob, highlight_chunks=highlight_chunks, linguistic_stats=linguistic_stats)
+        result = { "overall_percentage": round(final_prob * 100, 2), "component_scores": component_scores, "chunks": highlight_chunks, "linguistics": linguistic_stats }
         return result
 
 # ==============================================================================
-#  SERVER SETUP (Unchanged)
+#  SERVER SETUP
 # ==============================================================================
 print("Creating CombinedDetector instance...")
 DETECTOR_INSTANCE = CombinedDetector()
@@ -275,45 +258,62 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         if self.path == '/detect':
+            decrypted_text = None  # Ensure variable exists for the 'finally' block
             try:
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
                 body = json.loads(post_data)
-                text_to_analyze = body.get('text')
-                if not text_to_analyze or not isinstance(text_to_analyze, str) or len(text_to_analyze.strip()) == 0:
-                    raise ValueError("Request body must contain non-empty 'text' field")
                 
-                results = DETECTOR_INSTANCE.detect(text_to_analyze)
+                # --- START: DECRYPTION AND SECURE HANDLING ---
+                encrypted_text = body.get('encrypted_text')
+                if not encrypted_text or not isinstance(encrypted_text, str):
+                    raise ValueError("Request body must contain non-empty 'encrypted_text' field")
+                
+                # 1. Just-in-Time Decryption: Decrypt only when ready to process.
+                print("Request received. Decrypting payload...")
+                decrypted_text = decrypt_text(encrypted_text)
+                
+                # 2. Run Inference: Pass the plaintext to the detector.
+                print("Payload decrypted. Running inference...")
+                results = DETECTOR_INSTANCE.detect(decrypted_text)
+                # --- END: DECRYPTION AND SECURE HANDLING ---
                 
                 self.send_response(HTTPStatus.OK)
                 self.send_header('Content-type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps(results).encode('utf-8'))
+                print("Analysis complete and results sent.")
+
             except Exception as e:
                 print(f"Error processing request: {e}")
                 self.send_response(HTTPStatus.BAD_REQUEST)
                 self.send_header('Content-type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+                error_payload = {'error': f"An error occurred on the server: {type(e).__name__}"}
+                self.wfile.write(json.dumps(error_payload).encode('utf-8'))
+            finally:
+                # 3. Secure Deletion: Overwrite the variable holding the plaintext
+                #    to ensure it's cleared from memory as soon as possible.
+                if decrypted_text is not None:
+                    print("Clearing decrypted text from memory.")
+                    decrypted_text = None
         else:
             self.send_response(HTTPStatus.NOT_FOUND)
             self.end_headers()
 
-import socket
 
 class DualStackServer(socketserver.TCPServer):
     allow_reuse_address = True
-    address_family = socket.AF_INET6  # 👈 enable IPv6 support
+    address_family = socket.AF_INET6
 
 def run_server(port=8000):
     with DualStackServer(("", port), AIRequestHandler) as httpd:
         print(f"✅ Serving at http://[::]:{port} (IPv6 + IPv4)")
-        print("Try visiting:")
-        print("  • http://localhost:8000")
-        print("  • http://[2403:580d:1ab4:0:20b2:6b1c:5a7e:c7a3]:8000 (from outside, if port open)")
+        print("Point your browser to http://localhost:8000/index.html")
         httpd.serve_forever()
 
 if __name__ == "__main__":
+    load_private_key()  # Load the key before starting the server
     run_server()
