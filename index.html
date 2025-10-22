@@ -452,8 +452,62 @@
                 </div>
             </div>
             <div id="error-message"></div>
+                
             <div id="results-area" class="card">
-                <!-- Results area is unchanged -->
+                <div class="summary-grid">
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
+                            <circle id="progress-bar" class="progress-bar" cx="50" cy="50" r="45"
+                                stroke-dasharray="282.7" stroke-dashoffset="282.7"></circle>
+                        </svg>
+                        <div class="progress-text">
+                            <span id="overall-score">0%</span>
+                            <span class="progress-label">Human Score</span>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <h3>Analysis Summary</h3>
+                        <p id="summary-text">The analysis is complete.</p>
+                    </div>
+                </div>
+            
+                <div class="stats-dashboard">
+                    <div id="stat-card-perplexity" class="stat-card" title="Perplexity measures the randomness or unpredictability of text. Lower scores are common for AI, while higher scores suggest more complex, human-like expression.">
+                        <div class="stat-header"><span class="stat-label">Perplexity</span><span class="stat-rating"></span></div>
+                        <div class="stat-value">0</div>
+                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                    </div>
+                    <div id="stat-card-variation" class="stat-card" title="Also called 'Burstiness', this measures the variation in sentence length. Humans tend to vary their sentence length more than AI models.">
+                        <div class="stat-header"><span class="stat-label">Variation</span><span class="stat-rating"></span></div>
+                        <div class="stat-value">0</div>
+                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                    </div>
+                    <div id="stat-card-readability" class="stat-card" title="Estimates the educational grade level needed to understand the text. AI often targets a mid-range (9-12), while human writing can be simpler or more complex.">
+                        <div class="stat-header"><span class="stat-label">Readability Grade</span><span class="stat-rating"></span></div>
+                        <div class="stat-value">0</div>
+                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                    </div>
+                    <div id="stat-card-lexical" class="stat-card" title="Measures vocabulary richness (unique words / total words). Higher values indicate a more diverse vocabulary.">
+                        <div class="stat-header"><span class="stat-label">Lexical Richness</span><span class="stat-rating"></span></div>
+                        <div class="stat-value">0</div>
+                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                    </div>
+                </div>
+            
+                <div class="text-output-container">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--human-highlight-border);"></div>
+                            <span>Likely Human</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--ai-highlight-border);"></div>
+                            <span>Likely AI</span>
+                        </div>
+                    </div>
+                    <div id="highlighted-text" class="text-output"></div>
+                </div>
             </div>
         </main>
     </div>
