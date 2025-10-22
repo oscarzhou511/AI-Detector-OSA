@@ -10,6 +10,7 @@ import numpy as np
 import socket
 from pathlib import Path
 import base64
+import os
 
 # --- START: Import modules for decryption ---
 try:
@@ -75,29 +76,21 @@ def load_private_key():
 def decrypt_payload(payload):
     """
     Decrypts a hybrid encryption payload.
-    1. Decrypts the AES key using the server's private RSA key.
-    2. Decrypts the main text using the revealed AES key.
+    Returns the decrypted text AND the AES key used.
     """
     if not PRIVATE_KEY:
         raise ConnectionAbortedError("Server private key is not loaded.")
 
     # --- Step 1: Decrypt the AES key with RSA ---
-    # The client RSA-encrypts a Base64 string of the AES key.
-    # So, the payload['encrypted_key'] is a Base64 string of the ciphertext.
     encrypted_aes_key_b64 = payload['encrypted_key']
     encrypted_aes_key_bytes = base64.b64decode(encrypted_aes_key_b64)
 
-    # Decrypt the ciphertext. The result is the original plaintext, which was
-    # the Base64-encoded AES key. The result is a bytes object (e.g., b'Abc...=').
-    # A failure here raises ValueError("Decryption failed").
     decrypted_b64_aes_key_bytes = PRIVATE_KEY.decrypt(
         encrypted_aes_key_bytes,
         padding.PKCS1v15()
     )
     
-    # Now, Base64-decode the result to get the raw AES key.
     aes_key_bytes = base64.b64decode(decrypted_b64_aes_key_bytes)
-
 
     # --- Step 2: Decrypt the text with AES-GCM ---
     iv_b64 = payload['iv']
@@ -109,7 +102,8 @@ def decrypt_payload(payload):
     aesgcm = AESGCM(aes_key_bytes)
     decrypted_text_bytes = aesgcm.decrypt(iv_bytes, encrypted_text_bytes, None)
     
-    return decrypted_text_bytes.decode('utf-8')
+    # Return both the text and the key for reuse
+    return decrypted_text_bytes.decode('utf-8'), aes_key_bytes
 
 
 # --- All model classes (LinguisticAnalyzer, LogitDetector, etc.) are unchanged ---
@@ -222,28 +216,46 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/detect':
             decrypted_text = None
+            aes_key_bytes = None # Keep track of the key
             try:
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
                 body = json.loads(post_data)
                 
-                # --- START: DECRYPTION AND SECURE HANDLING ---
                 if 'encrypted_key' not in body or 'iv' not in body or 'encrypted_text' not in body:
                     raise ValueError("Request is missing required encryption fields.")
                 
                 print("Request received. Decrypting payload...")
-                decrypted_text = decrypt_payload(body)
+                # Get both the text and the key
+                decrypted_text, aes_key_bytes = decrypt_payload(body)
                 
                 print("Payload decrypted. Running inference...")
                 results = DETECTOR_INSTANCE.detect(decrypted_text)
-                # --- END: DECRYPTION AND SECURE HANDLING ---
+                
+                # --- START: ENCRYPT THE RESPONSE ---
+                print("Inference complete. Encrypting response...")
+                results_json_bytes = json.dumps(results).encode('utf-8')
+
+                # Generate a new, secure IV for the response
+                iv_response = os.urandom(12) 
+                
+                # Encrypt the JSON results using the same AES key
+                aesgcm = AESGCM(aes_key_bytes)
+                encrypted_response_bytes = aesgcm.encrypt(iv_response, results_json_bytes, None)
+
+                # Prepare the secure payload to send back
+                response_payload = {
+                    'iv': base64.b64encode(iv_response).decode('utf-8'),
+                    'encrypted_response': base64.b64encode(encrypted_response_bytes).decode('utf-8')
+                }
+                # --- END: ENCRYPT THE RESPONSE ---
                 
                 self.send_response(HTTPStatus.OK)
                 self.send_header('Content-type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                self.wfile.write(json.dumps(results).encode('utf-8'))
-                print("Analysis complete and results sent.")
+                self.wfile.write(json.dumps(response_payload).encode('utf-8'))
+                print("Encrypted response sent.")
 
             except Exception as e:
                 print(f"Error processing request: {e}")
