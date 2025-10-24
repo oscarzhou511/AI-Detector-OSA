@@ -11,6 +11,8 @@ import socket
 from pathlib import Path
 import base64
 import os
+import sqlite3
+from datetime import date
 
 # --- START: Import modules for decryption ---
 try:
@@ -23,6 +25,16 @@ except ImportError:
     print("   pip install cryptography")
     exit(1)
 # --- END: Import modules for decryption ---
+
+# --- START: Import modules for Google Auth ---
+try:
+    from google.oauth2 import id_token
+    from google.auth.transport import requests
+except ImportError:
+    print("\n❌ Missing dependency: 'google-auth'. Please install it by running:")
+    print("   pip install google-auth")
+    exit(1)
+# --- END: Import modules for Google Auth ---
 
 # --- NLTK and other imports are unchanged ---
 import nltk
@@ -49,6 +61,37 @@ def get_optimal_device():
     else:
         return torch.device("cpu")
 DEVICE = get_optimal_device()
+
+# ==============================================================================
+#  AUTHENTICATION & QUOTA SETUP
+# ==============================================================================
+# IMPORTANT: Replace with your actual Google Client ID from the Google Cloud Console
+GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com" 
+DB_PATH = "users.db"
+DAILY_WORD_LIMIT = 1000
+PEMBROKE_DOMAIN = "@pembroke.sa.edu.au"
+
+def init_db():
+    """Initializes the database and creates the users table if it doesn't exist."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            google_id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            words_used_today INTEGER DEFAULT 0,
+            last_reset_date TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    print("✅ Database initialized successfully.")
+
+def get_db_connection():
+    """Returns a new database connection with row factory."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # ==============================================================================
 #  ENCRYPTION/DECRYPTION SETUP
@@ -216,39 +259,112 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/detect':
             decrypted_text = None
-            aes_key_bytes = None # Keep track of the key
+            aes_key_bytes = None
+            conn = None
             try:
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
                 body = json.loads(post_data)
+
+                # --- 1. AUTHENTICATION ---
+                id_token_str = body.get('token')
+                if not id_token_str:
+                    raise ValueError("Request is missing authentication token.")
                 
+                print("Request received. Verifying token...")
+                try:
+                    idinfo = id_token.verify_oauth2_token(id_token_str, requests.Request(), GOOGLE_CLIENT_ID)
+                    google_id = idinfo['sub']
+                    email = idinfo['email']
+                    print(f"✅ Token verified for user: {email}")
+                except ValueError as e:
+                    # Handle invalid token
+                    print(f"❌ Token verification failed: {e}")
+                    self.send_response(HTTPStatus.UNAUTHORIZED)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': 'Invalid authentication token.'}).encode('utf-8'))
+                    return
+                
+                # --- 2. DECRYPTION ---
                 if 'encrypted_key' not in body or 'iv' not in body or 'encrypted_text' not in body:
                     raise ValueError("Request is missing required encryption fields.")
                 
-                print("Request received. Decrypting payload...")
-                # Get both the text and the key
+                print("Decrypting payload...")
                 decrypted_text, aes_key_bytes = decrypt_payload(body)
+                word_count = len(decrypted_text.split())
+
+                # --- 3. QUOTA CHECK ---
+                print(f"Word count for this request: {word_count}")
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                today_str = date.today().isoformat()
                 
-                print("Payload decrypted. Running inference...")
+                cursor.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
+                user = cursor.fetchone()
+
+                is_unlimited = email.endswith(PEMBROKE_DOMAIN)
+                words_used_today = 0
+                
+                if user:
+                    if user['last_reset_date'] != today_str:
+                        print(f"New day for user {email}. Resetting quota.")
+                        cursor.execute("UPDATE users SET words_used_today = 0, last_reset_date = ? WHERE google_id = ?", (today_str, google_id))
+                        words_used_today = 0
+                    else:
+                        words_used_today = user['words_used_today']
+                else:
+                    print(f"New user: {email}. Creating database entry.")
+                    cursor.execute("INSERT INTO users (google_id, email, last_reset_date) VALUES (?, ?, ?)", (google_id, email, today_str))
+
+                conn.commit()
+
+                if not is_unlimited:
+                    if words_used_today + word_count > DAILY_WORD_LIMIT:
+                        print(f"❌ Quota exceeded for user {email}.")
+                        self.send_response(HTTPStatus.TOO_MANY_REQUESTS)
+                        self.send_header('Content-type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        error_payload = {
+                            'error': 'Daily word limit exceeded.',
+                            'quota_info': {
+                                'words_used_today': words_used_today,
+                                'daily_limit': DAILY_WORD_LIMIT,
+                                'is_unlimited': is_unlimited
+                            }
+                        }
+                        self.wfile.write(json.dumps(error_payload).encode('utf-8'))
+                        return
+
+                # --- 4. INFERENCE ---
+                print("Quota check passed. Running inference...")
                 results = DETECTOR_INSTANCE.detect(decrypted_text)
+
+                # --- 5. UPDATE QUOTA & PREPARE RESPONSE ---
+                if not is_unlimited:
+                    new_total_words = words_used_today + word_count
+                    cursor.execute("UPDATE users SET words_used_today = ? WHERE google_id = ?", (new_total_words, google_id))
+                    conn.commit()
+                    words_used_today = new_total_words
                 
-                # --- START: ENCRYPT THE RESPONSE ---
+                results['quota_info'] = {
+                    'words_used_today': words_used_today,
+                    'daily_limit': DAILY_WORD_LIMIT,
+                    'is_unlimited': is_unlimited
+                }
+                
+                # --- 6. ENCRYPT AND SEND RESPONSE ---
                 print("Inference complete. Encrypting response...")
                 results_json_bytes = json.dumps(results).encode('utf-8')
-
-                # Generate a new, secure IV for the response
                 iv_response = os.urandom(12) 
-                
-                # Encrypt the JSON results using the same AES key
                 aesgcm = AESGCM(aes_key_bytes)
                 encrypted_response_bytes = aesgcm.encrypt(iv_response, results_json_bytes, None)
-
-                # Prepare the secure payload to send back
                 response_payload = {
                     'iv': base64.b64encode(iv_response).decode('utf-8'),
                     'encrypted_response': base64.b64encode(encrypted_response_bytes).decode('utf-8')
                 }
-                # --- END: ENCRYPT THE RESPONSE ---
                 
                 self.send_response(HTTPStatus.OK)
                 self.send_header('Content-type', 'application/json')
@@ -266,6 +382,8 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
                 error_payload = {'error': f"An error occurred on the server: {type(e).__name__}"}
                 self.wfile.write(json.dumps(error_payload).encode('utf-8'))
             finally:
+                if conn:
+                    conn.close()
                 if decrypted_text is not None:
                     print("Clearing decrypted text from memory.")
                     decrypted_text = None
@@ -285,5 +403,6 @@ def run_server(port=8000):
         httpd.serve_forever()
 
 if __name__ == "__main__":
+    init_db()
     load_private_key()
     run_server()
