@@ -5,9 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Content Detector</title>
-    <!-- IMPORTANT: Replace with your actual Google Client ID from the Google Cloud Console -->
-    <meta name="google-signin-client_id" content="810577671337-sctto8p3i003l9renmhhlv4fs2pg69ik.apps.googleusercontent.com">
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <!-- NOTE: The meta tag for client_id is no longer used by the new library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -171,7 +170,7 @@
 
         @keyframes spin {
             to {
-                transform: rotate(360deg);
+                transform: rotate(3060deg);
             }
         }
 
@@ -514,22 +513,23 @@
             <h1><i class="fa-solid fa-robot" style="color: var(--primary-color);"></i> Efficient AI Text Detector</h1>
             <p>Fully Private, Efficient, and Accurate</p>
         </header>
-        
+
         <div id="login-view">
             <div class="card">
                 <h2>Welcome!</h2>
-                <p>Please sign in with your Google account to use the detector. Regular users receive 1000 words per day for free. Teachers and staff from Pembroke School receive unlimited access.</p>
+                <p>Please sign in with your Google account to use the detector. Regular users receive 1000 words per day
+                    for free. Teachers and staff from Pembroke School receive unlimited access.</p>
                 <div id="google-signin-button"></div>
             </div>
         </div>
 
         <main id="app-view" style="display: none;">
-             <div class="user-info-bar">
+            <div class="user-info-bar">
                 <div class="user-details">
                     <span>Logged In As</span>
                     <span id="user-email"></span>
                 </div>
-                 <div class="quota-details">
+                <div class="quota-details">
                     <span>Daily Usage</span>
                     <span id="user-quota">0 / 1000 words</span>
                 </div>
@@ -547,7 +547,7 @@
                 </div>
             </div>
             <div id="error-message"></div>
-                
+
             <div id="results-area" class="card">
                 <div class="summary-grid">
                     <div class="progress-circle">
@@ -566,30 +566,46 @@
                         <p id="summary-text">The analysis is complete.</p>
                     </div>
                 </div>
-            
+
                 <div class="stats-dashboard">
-                    <div id="stat-card-perplexity" class="stat-card" title="Perplexity measures the randomness or unpredictability of text. Lower scores are common for AI, while higher scores suggest more complex, human-like expression.">
-                        <div class="stat-header"><span class="stat-label">Perplexity</span><span class="stat-rating"></span></div>
+                    <div id="stat-card-perplexity" class="stat-card"
+                        title="Perplexity measures the randomness or unpredictability of text. Lower scores are common for AI, while higher scores suggest more complex, human-like expression.">
+                        <div class="stat-header"><span class="stat-label">Perplexity</span><span
+                                class="stat-rating"></span></div>
                         <div class="stat-value">0</div>
-                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
                     </div>
-                    <div id="stat-card-variation" class="stat-card" title="Also called 'Burstiness', this measures the variation in sentence length. Humans tend to vary their sentence length more than AI models.">
-                        <div class="stat-header"><span class="stat-label">Variation</span><span class="stat-rating"></span></div>
+                    <div id="stat-card-variation" class="stat-card"
+                        title="Also called 'Burstiness', this measures the variation in sentence length. Humans tend to vary their sentence length more than AI models.">
+                        <div class="stat-header"><span class="stat-label">Variation</span><span
+                                class="stat-rating"></span></div>
                         <div class="stat-value">0</div>
-                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
                     </div>
-                    <div id="stat-card-readability" class="stat-card" title="Estimates the educational grade level needed to understand the text. AI often targets a mid-range (9-12), while human writing can be simpler or more complex.">
-                        <div class="stat-header"><span class="stat-label">Readability Grade</span><span class="stat-rating"></span></div>
+                    <div id="stat-card-readability" class="stat-card"
+                        title="Estimates the educational grade level needed to understand the text. AI often targets a mid-range (9-12), while human writing can be simpler or more complex.">
+                        <div class="stat-header"><span class="stat-label">Readability Grade</span><span
+                                class="stat-rating"></span></div>
                         <div class="stat-value">0</div>
-                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
                     </div>
-                    <div id="stat-card-lexical" class="stat-card" title="Measures vocabulary richness (unique words / total words). Higher values indicate a more diverse vocabulary.">
-                        <div class="stat-header"><span class="stat-label">Lexical Richness</span><span class="stat-rating"></span></div>
+                    <div id="stat-card-lexical" class="stat-card"
+                        title="Measures vocabulary richness (unique words / total words). Higher values indicate a more diverse vocabulary.">
+                        <div class="stat-header"><span class="stat-label">Lexical Richness</span><span
+                                class="stat-rating"></span></div>
                         <div class="stat-value">0</div>
-                        <div class="gauge-container"><div class="gauge-bar"></div></div>
+                        <div class="gauge-container">
+                            <div class="gauge-bar"></div>
+                        </div>
                     </div>
                 </div>
-            
+
                 <div class="text-output-container">
                     <div class="legend">
                         <div class="legend-item">
@@ -608,6 +624,7 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"; // <-- PASTE YOUR CLIENT ID HERE
             const publicKey = `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2YlQJJaB9O3X91mYfk9z
 3U0Zt4oC95TXVV8omGmCpeNc53Z392oXhkrWkzUsae90BWO2ORqtT9e/+OMW2I9e
@@ -635,49 +652,54 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
             let idToken = null; // Store the user's ID token
 
             checkButton.addEventListener('click', handleAnalysis);
+            signOutButton.addEventListener('click', handleSignOut);
             textInput.addEventListener('input', () => {
                 const text = textInput.value.trim();
                 document.getElementById('word-count').textContent = `${text.split(/\s+/).filter(Boolean).length} words`;
             });
 
-            function startApp() {
-                gapi.load('auth2', function() {
-                    const auth2 = gapi.auth2.init({
-                        client_id: document.querySelector('meta[name="google-signin-client_id"]').content,
-                        cookiepolicy: 'single_host_origin',
-                    });
-                    attachSignin(document.getElementById('google-signin-button'));
-                    signOutButton.addEventListener('click', () => {
-                        auth2.signOut().then(() => {
-                            idToken = null;
-                            loginView.style.display = 'block';
-                            appView.style.display = 'none';
-                        });
-                    });
+            // This function is called by the Google GIS library after it loads
+            window.onload = function () {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse
                 });
-            }
+                google.accounts.id.renderButton(
+                    document.getElementById("google-signin-button"), {
+                        theme: "outline",
+                        size: "large"
+                    }
+                );
+                google.accounts.id.prompt(); // Also display the One Tap prompt
+            };
 
-            function attachSignin(element) {
-                gapi.auth2.getAuthInstance().attachClickHandler(element, {}, onSignIn, (error) => {
-                    showError(`Sign-in error: ${JSON.stringify(error, undefined, 2)}`);
-                });
-            }
+            function handleCredentialResponse(response) {
+                // The response.credential is the ID token (a JWT)
+                idToken = response.credential;
 
-            function onSignIn(googleUser) {
-                const profile = googleUser.getBasicProfile();
-                idToken = googleUser.getAuthResponse().id_token;
-                userEmailEl.textContent = profile.getEmail();
+                // Decode the JWT to get user info without needing a library
+                const payload = JSON.parse(atob(idToken.split('.')[1]));
+                const userEmail = payload.email;
 
-                if (profile.getEmail().endsWith('@pembroke.sa.edu.au')) {
+                userEmailEl.textContent = userEmail;
+
+                if (userEmail.endsWith('@pembroke.sa.edu.au')) {
                     updateQuotaDisplay({ is_unlimited: true });
                     setTimeout(() => alert("Teachers and Staff from Pembroke School have unlimited access to this service."), 100);
                 } else {
                     updateQuotaDisplay({ is_unlimited: false, words_used_today: 0, daily_limit: 1000 });
                 }
-                
+
                 loginView.style.display = 'none';
                 appView.style.display = 'block';
                 resultsArea.classList.remove('visible');
+            }
+
+            function handleSignOut() {
+                idToken = null;
+                google.accounts.id.disableAutoSelect(); // Prevent auto-re-login
+                loginView.style.display = 'block';
+                appView.style.display = 'none';
             }
 
             // --- Helper functions for encryption/decryption are unchanged ---
@@ -690,6 +712,7 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 }
                 return window.btoa(binary);
             }
+
             function base64ToArrayBuffer(base64) {
                 const binary_string = window.atob(base64);
                 const len = binary_string.length;
@@ -713,13 +736,19 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 setLoadingState(true);
                 hideError();
                 resultsArea.classList.remove('visible');
-    
+
                 try {
                     // --- HYBRID ENCRYPTION LOGIC (Unchanged) ---
-                    const aesKey = await window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+                    const aesKey = await window.crypto.subtle.generateKey({
+                        name: "AES-GCM",
+                        length: 256
+                    }, true, ["encrypt", "decrypt"]);
                     const iv = window.crypto.getRandomValues(new Uint8Array(12));
                     const textEncoder = new TextEncoder();
-                    const encryptedTextBuffer = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, aesKey, textEncoder.encode(rawText));
+                    const encryptedTextBuffer = await window.crypto.subtle.encrypt({
+                        name: "AES-GCM",
+                        iv: iv
+                    }, aesKey, textEncoder.encode(rawText));
                     const exportedAesKeyBuffer = await window.crypto.subtle.exportKey("raw", aesKey);
                     const rsaEncrypt = new JSEncrypt();
                     rsaEncrypt.setPublicKey(publicKey);
@@ -736,31 +765,38 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
 
                     const response = await fetch('http://localhost:8000/detect', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
-                    
+
                     const response_payload = await response.json();
                     if (!response.ok) {
-                         if (response.status === 429 && response_payload.quota_info) {
+                        if (response.status === 429 && response_payload.quota_info) {
                             updateQuotaDisplay(response_payload.quota_info);
                         }
                         throw new Error(response_payload.error || 'Server Error');
                     }
-    
+
                     // --- DECRYPT THE RESPONSE (Unchanged) ---
                     const iv_response = base64ToArrayBuffer(response_payload.iv);
                     const encrypted_response = base64ToArrayBuffer(response_payload.encrypted_response);
-                    const decrypted_buffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv_response }, aesKey, encrypted_response);
+                    const decrypted_buffer = await window.crypto.subtle.decrypt({
+                        name: "AES-GCM",
+                        iv: iv_response
+                    }, aesKey, encrypted_response);
                     const textDecoder = new TextDecoder();
                     const decrypted_json_string = textDecoder.decode(decrypted_buffer);
                     const final_results = JSON.parse(decrypted_json_string);
-    
+
                     displayResults(final_results);
-    
+
                 } catch (error) {
                     console.error('Analysis failed:', error);
-                    showError(`An error occurred: ${error.message}. Please check your daily word limit or try again later.`);
+                    showError(
+                        `An error occurred: ${error.message}. Please check your daily word limit or try again later.`
+                    );
                 } finally {
                     setLoadingState(false);
                 }
@@ -774,7 +810,8 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 progressBar.style.strokeDashoffset = circumference - (humanityScore / 100) * circumference;
                 let summary = "The analysis suggests this text is likely human-written.";
                 if (humanityScore < 25) summary = "The analysis strongly suggests this text is AI-generated.";
-                else if (humanityScore < 60) summary = "This text shows a mix of human and AI-like characteristics.";
+                else if (humanityScore < 60) summary =
+                    "This text shows a mix of human and AI-like characteristics.";
                 document.getElementById('summary-text').textContent = summary;
                 if (data.linguistics) {
                     updateStatCard('perplexity', data.linguistics.perplexity);
@@ -796,7 +833,10 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 }
 
                 resultsArea.classList.add('visible');
-                resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                resultsArea.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             }
 
             function updateQuotaDisplay(quotaInfo) {
@@ -806,7 +846,7 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                     userQuotaEl.textContent = `${quotaInfo.words_used_today} / ${quotaInfo.daily_limit} words`;
                 }
             }
-            
+
             // --- Other functions (updateStatCard, setLoadingState, etc.) are unchanged ---
             function updateStatCard(type, value) {
                 const card = document.getElementById(`stat-card-${type}`);
@@ -815,24 +855,64 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 const ratingEl = card.querySelector('.stat-rating');
                 const gaugeBarEl = card.querySelector('.gauge-bar');
                 valueEl.textContent = value;
-                let rating = { text: 'Medium', className: 'medium', gaugePercent: 50 };
+                let rating = {
+                    text: 'Medium',
+                    className: 'medium',
+                    gaugePercent: 50
+                };
                 switch (type) {
                     case 'perplexity':
-                        if (value > 150) rating = { text: 'High', className: 'high', gaugePercent: 90 };
-                        else if (value < 60) rating = { text: 'Low', className: 'low', gaugePercent: 20 };
+                        if (value > 150) rating = {
+                            text: 'High',
+                            className: 'high',
+                            gaugePercent: 90
+                        };
+                        else if (value < 60) rating = {
+                            text: 'Low',
+                            className: 'low',
+                            gaugePercent: 20
+                        };
                         break;
                     case 'variation':
-                        if (value > 6) rating = { text: 'High', className: 'high', gaugePercent: 90 };
-                        else if (value < 3) rating = { text: 'Low', className: 'low', gaugePercent: 20 };
+                        if (value > 6) rating = {
+                            text: 'High',
+                            className: 'high',
+                            gaugePercent: 90
+                        };
+                        else if (value < 3) rating = {
+                            text: 'Low',
+                            className: 'low',
+                            gaugePercent: 20
+                        };
                         break;
                     case 'readability':
-                        if (value < 8 || value > 13) rating = { text: 'Natural', className: 'high', gaugePercent: 75 };
-                        else rating = { text: 'Common AI', className: 'low', gaugePercent: 30 };
+                        if (value < 8 || value > 13) rating = {
+                            text: 'Natural',
+                            className: 'high',
+                            gaugePercent: 75
+                        };
+                        else rating = {
+                            text: 'Common AI',
+                            className: 'low',
+                            gaugePercent: 30
+                        };
                         break;
                     case 'lexical':
-                        if (value > 0.65) rating = { text: 'Rich', className: 'high', gaugePercent: 85 };
-                        else if (value < 0.5) rating = { text: 'Simple', className: 'low', gaugePercent: 35 };
-                        else rating = { text: 'Normal', className: 'medium', gaugePercent: 60 };
+                        if (value > 0.65) rating = {
+                            text: 'Rich',
+                            className: 'high',
+                            gaugePercent: 85
+                        };
+                        else if (value < 0.5) rating = {
+                            text: 'Simple',
+                            className: 'low',
+                            gaugePercent: 35
+                        };
+                        else rating = {
+                            text: 'Normal',
+                            className: 'medium',
+                            gaugePercent: 60
+                        };
                         break;
                 }
                 ratingEl.textContent = rating.text;
@@ -840,17 +920,23 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 gaugeBarEl.className = `gauge-bar ${rating.className}`;
                 gaugeBarEl.style.width = `${rating.gaugePercent}%`;
             }
+
             function setLoadingState(isLoading) {
                 checkButton.disabled = isLoading;
                 const icon = checkButton.querySelector('i');
                 document.getElementById('button-text').textContent = isLoading ? 'Analyzing...' : 'Analyze Text';
                 icon.className = isLoading ? 'spinner' : 'fa-solid fa-wand-magic-sparkles';
             }
-            function showError(message) { document.getElementById('error-message').textContent = message; document.getElementById('error-message').style.display = 'block'; }
-            function hideError() { document.getElementById('error-message').style.display = 'none'; }
 
-            // Kick off the Google Sign-In setup
-            startApp();
+            function showError(message) {
+                document.getElementById('error-message').textContent = message;
+                document.getElementById('error-message').style.display = 'block';
+            }
+
+            function hideError() {
+                document.getElementById('error-message').style.display = 'none';
+            }
+
         });
     </script>
 </body>
