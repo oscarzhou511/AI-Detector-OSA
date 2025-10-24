@@ -66,7 +66,7 @@ DEVICE = get_optimal_device()
 #  AUTHENTICATION & QUOTA SETUP
 # ==============================================================================
 # IMPORTANT: Replace with your actual Google Client ID from the Google Cloud Console
-GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com" 
+GOOGLE_CLIENT_ID = "810577671337-sctto8p3i003l9renmhhlv4fs2pg69ik.apps.googleusercontent.com" 
 DB_PATH = "users.db"
 DAILY_WORD_LIMIT = 1000
 PEMBROKE_DOMAIN = "@pembroke.sa.edu.au"
