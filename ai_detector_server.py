@@ -462,9 +462,9 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     error_payload = {'error': f"An error occurred on the server: {type(e).__name__}"}
                     self.wfile.write(json.dumps(error_payload).encode('utf-8'))
-                finally:
-                    if conn:
-                        conn.close()
+            finally:
+                if conn:
+                    conn.close()
         
         else:
             self.send_response(HTTPStatus.NOT_FOUND)
