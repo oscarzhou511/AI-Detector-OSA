@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Content Detector</title>
-    <!-- NOTE: The meta tag for client_id is no longer used by the new library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <title>AI Content Detector - OSA Detector</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <!-- JSEncrypt library for RSA key encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
     <style>
         :root {
@@ -27,6 +24,8 @@
         .detector-container {
             width: 100%;
             max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             gap: 2rem;
@@ -252,7 +251,7 @@
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <i class="fas fa-brain"></i>
-                <span>AI Detector</span>
+                OSA Detector
             </a>
             <ul class="nav-menu">
                 <li class="nav-item">
@@ -280,17 +279,17 @@
                 <span id="word-count">0</span> words
             </div>
             <div class="button-group">
-                <button id="analyze-btn" class="btn btn-primary" onclick="analyzeText()">
+                <button class="btn btn-primary" id="analyze-btn" onclick="analyzeText()">
                     <i class="fas fa-search"></i> Analyze Text
                 </button>
-                <button id="clear-btn" class="btn btn-secondary" onclick="clearText()">
+                <button class="btn btn-secondary" id="clear-btn" onclick="clearText()">
                     <i class="fas fa-eraser"></i> Clear
                 </button>
             </div>
         </div>
 
         <!-- Results Section -->
-        <div id="results" class="card">
+        <div class="card" id="results">
             <div class="card-header">
                 <h2>Analysis Results</h2>
             </div>
@@ -313,11 +312,11 @@
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-box ai"></div>
-                    <span>AI-Generated</span>
+                    AI-Generated
                 </div>
                 <div class="legend-item">
                     <div class="legend-box human"></div>
-                    <span>Human-Written</span>
+                    Human-Written
                 </div>
             </div>
 
