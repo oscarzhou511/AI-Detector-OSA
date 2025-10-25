@@ -1,150 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Features - OSA AI Detector</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Features - OSA AI Detector</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    /* --- Page-Specific Enhancements (Allowed Inline) --- */
+    main {
+      padding-top: 100px;
+    }
+
+    .section {
+      position: relative;
+    }
+
+    /* Decorative glowing background dots */
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(39,165,255,0.15), transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+    }
+
+    .section::after {
+      content: '';
+      position: absolute;
+      bottom: 15%;
+      right: 10%;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(50,239,138,0.12), transparent 70%);
+      filter: blur(90px);
+      z-index: -1;
+    }
+
+    /* Enhanced Mermaid container styling */
+    .mermaid {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(39, 165, 255, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(39, 165, 255, 0.08);
+      padding: 1.5rem;
+      overflow-x: auto;
+      transition: transform 0.3s ease;
+    }
+    .mermaid:hover {
+      transform: scale(1.01);
+    }
+
+    .card-content p {
+      line-height: 1.75;
+    }
+
+    .glass-card h4 {
+      text-align: center;
+      font-weight: 600;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Gentle floating animation for icons */
+    .fa-lock {
+      animation: floatIcon 3s ease-in-out infinite;
+    }
+
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
 </head>
+
 <body>
-    <!-- Navigation (Same as index.html, but with "Features" active) -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="nav-brand">OSA Detector</a>
-            <ul class="nav-links">
-                <li><a href="index.html" class="nav-link">Home</a></li>
-                <li><a href="features.html" class="nav-link active">Features</a></li>
-            </ul>
-            <a href="detector.html" class="btn btn-primary">Launch Detector <i class="fa-solid fa-arrow-right"></i></a>
-        </div>
-    </nav>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">OSA Detector</a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="features.html" class="nav-link active">Features</a></li>
+      </ul>
+      <a href="detector.html" class="btn btn-primary"
+        >Launch Detector <i class="fa-solid fa-arrow-right"></i
+      ></a>
+    </div>
+  </nav>
 
-    <main style="padding-top: 100px;">
-        <!-- Security Section -->
-        <!-- START OF REPLACEMENT FOR features.html -->
+  <main>
+    <!-- Privacy & Security Section -->
+    <section id="security" class="section">
+      <h2 class="section-title">
+        Our Foundation: <span>Uncompromising Privacy</span>
+      </h2>
+      <p class="section-subtitle">
+        A secure, private experience is our top priority. Our hybrid encryption
+        system guarantees that your data remains protected from submission to
+        analysis.
+      </p>
 
-    <main style="padding-top: 100px;">
-        <!-- Security Section -->
-        <section id="security" class="section">
-            <h2 class="section-title">Our Foundation: Uncompromising Privacy</h2>
-            <p class="section-subtitle">
-                As outlined in our research, providing a secure and private tool is paramount. While the ultimate goal is on-device processing, our web-based tool uses a state-of-the-art hybrid encryption system to ensure your data's privacy is never compromised.
+      <div class="glass-card" style="padding: 2rem 2.5rem;">
+        <div class="card-content">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <i
+              class="fa-solid fa-lock"
+              style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem;"
+            ></i>
+            <h3 class="card-title">
+              Hybrid Encryption: Security You Don’t Have to Think About
+            </h3>
+            <p>
+              When you submit text, it never leaves your browser in a readable
+              format. Using a dual-layer (RSA + AES) encryption model, your
+              content stays private throughout the entire analysis process.
             </p>
-            <div class="glass-card" style="padding: 2rem 2.5rem;">
-                 <div class="card-content">
-                    <div style="text-align:center; margin-bottom: 2rem;">
-                        <i class="fa-solid fa-lock" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
-                        <h3 class="card-title">Hybrid Encryption: Security You Don't Have to Think About</h3>
-                        <p>When you submit text for analysis, it never leaves your browser in a readable format. We use a "double-lock" system (RSA and AES hybrid encryption) to guarantee that only you and our secure server can ever access the content, for the brief moment it's being analyzed.</p>
-                    </div>
+          </div>
 
-                    <h4 style="margin-bottom: 1rem; font-size: 1.5rem; color: var(--dark-color);">How It Works: A Conceptual View</h4>
-                    <p style="margin-bottom: 2rem;">Think of it like sending a valuable item in a locked box. You lock the box (AES encryption), but then you put the key to that box inside a special, indestructible envelope that only our server can open (RSA encryption). Both are sent together, but neither can be compromised.</p>
-                    
-                    <!-- Mermaid Diagram 1 -->
-                    <div class="mermaid" style="margin-bottom: 3rem;">
-                        flowchart TD
-                         subgraph subGraph0["User's Browser"]
-                                B["Encrypted Text"]
-                                A["Your Raw Text"]
-                                D["Encrypted Secret Key"]
-                                C["Temporary Secret Key"]
-                          end
-                         subgraph subGraph1["Secure Transmission (Internet)"]
-                                E["Secure Payload"]
-                          end
-                         subgraph Server["Server"]
-                                F{"Analysis Server"}
-                                G["Temporary Secret Key"]
-                                H["Your Raw Text in memory only"]
-                                I["AI Detection Models"]
-                                J["Analysis Results"]
-                                K["Encrypted Results"]
-                          end
-                         subgraph subGraph3["Secure Transmission (Internet)"]
-                                L["Secure Response"]
-                          end
-                         subgraph subGraph4["User's Browser"]
-                                M{"Your Browser"}
-                                N["Final Results Displayed"]
-                          end
-                            A -- Locked with a temporary secret key --> B
-                            C -- The secret key itself is locked with our Public Key --> D
-                            B --> E
-                            D --> E
-                            E --> F
-                            F -- Our Private Key unlocks the secret key --> G
-                            F -- The secret key unlocks the text for analysis --> H
-                            H --> I
-                            I --> J
-                            J -- "Results are re-locked with the same secret key" --> K
-                            K --> L
-                            L --> M
-                            M -- Original secret key unlocks the results --> N
-                        
-                            style B fill:#f9f,stroke:#333,stroke-width:2px
-                            style D fill:#f9f,stroke:#333,stroke-width:2px
-                            style K fill:#ccf,stroke:#333,stroke-width:2px
-                    </div>
-                    
-                    <h4 style="margin-bottom: 1rem; font-size: 1.5rem; color: var(--dark-color);">The Technical Deep-Dive</h4>
-                    <p style="margin-bottom: 2rem;">The entire request-response cycle is end-to-end encrypted. The temporary key used to encrypt and decrypt your data is generated in your browser, and the unencrypted version of it is never transmitted.</p>
+          <h4>How It Works: A Conceptual View</h4>
+          <p style="margin-bottom: 2rem;">
+            Imagine sending a valuable item in a locked box. You lock it (AES),
+            then seal the key in an envelope that only our secure server can
+            open (RSA). Both travel together safely—yet remain indecipherable.
+          </p>
 
-                    <!-- Mermaid Diagram 2 -->
-                    <div class="mermaid">
-                        sequenceDiagram
-                            participant Browser
-                            participant Server
+          <!-- Mermaid Diagram -->
+          <div class="mermaid" style="margin-bottom: 3rem;">
+            flowchart TD
+              subgraph Browser["User's Browser"]
+                A["Your Raw Text"]
+                B["Encrypted Text"]
+                C["Temporary Secret Key"]
+                D["Encrypted Secret Key"]
+              end
+              subgraph Internet["Secure Transmission"]
+                E["Encrypted Payload"]
+              end
+              subgraph Server["Secure Server"]
+                F["Analysis Server"]
+                G["Decrypted Key"]
+                H["Decrypted Text (in-memory only)"]
+                I["AI Detection Models"]
+                J["Encrypted Results"]
+              end
+              subgraph Return["Response Transmission"]
+                L["Encrypted Response"]
+              end
+              subgraph Display["Your Browser"]
+                N["Decrypted Results Displayed"]
+              end
 
-                            Note over Browser: Security process starts before<br>any data is sent.
-                            Browser->>Browser: 1. Generate a temporary, one-time AES secret key.
-                            Browser->>Browser: 2. Encrypt the user's text using this AES key.
-                            Browser->>Browser: 3. Encrypt the AES key itself using the Server's Public Key (RSA).
+              A -->|AES Encrypt| B
+              C -->|RSA Encrypt| D
+              B & D --> E --> F
+              F -->|Decrypt| G --> H --> I --> J --> L --> N
+          </div>
 
-                            Browser->>Server: 4. Send [Encrypted Text + Encrypted AES Key + IV]
-                            
-                            Note over Server: Server receives the payload.<br>The raw text is unreadable.
-                            Server->>Server: 5. Use its unique Private Key to decrypt the AES key.
-                            Server->>Server: 6. Use the now-revealed AES key to decrypt the text.
-                            
-                            Note over Server: Text is held in memory only during analysis.
-                            Server->>Server: 7. Perform AI analysis on the plain text.
-                            
-                            Server->>Server: 8. Re-encrypt the analysis results with the same AES key.
-                            Server->>Browser: 9. Send back [Encrypted Results + new IV].
+          <h4>The Technical Deep-Dive</h4>
+          <p>
+            All communication is end-to-end encrypted. The temporary AES key is
+            generated locally and never transmitted unencrypted, ensuring no
+            intermediary ever sees your raw text.
+          </p>
 
-                            Note over Browser: Browser uses the key it never sent.
-                            Browser->>Browser: 10. Decrypt results with the original AES key.
-                            Browser->>Browser: 11. Display analysis to the user.
-                    </div>
-                </div>
-            </div>
-        </section>
-    <!-- END OF REPLACEMENT FOR features.html -->
+          <!-- Sequence Diagram -->
+          <div class="mermaid">
+            sequenceDiagram
+              participant Browser
+              participant Server
 
-        <!-- Accuracy & Transparency Section -->
-        <section class="section">
-            <h2 class="section-title">How We Achieve High Accuracy</h2>
-            <p class="section-subtitle">A single model is not enough. Our strength lies in our multi-layered analysis.</p>
-            <div class="card-grid">
-                <div class="glass-card scroll-reveal">
-                    <h3 class="card-title">1. Overall Classification</h3>
-                    <p class="card-description">First, a powerful classifier model reads the entire text to provide a holistic AI probability score. This gives a strong baseline for the analysis.</p>
-                </div>
-                <div class="glass-card scroll-reveal">
-                    <h3 class="card-title">2. Sentence-Level Highlighting</h3>
-                    <p class="card-description">Next, we scan sentence by sentence, highlighting passages that are likely AI-generated versus human. This reveals the texture of the writing.</p>
-                </div>
-                <div class="glass-card scroll-reveal">
-                    <h3 class="card-title">3. Deep Linguistic Analysis</h3>
-                    <p class="card-description">Finally, we measure the vital signs of human writing: Perplexity (randomness), Variation (burstiness), Readability, and Lexical Richness. These metrics provide transparent, data-driven insights that contribute to the final score, which you can see in your results.</p>
-                </div>
-            </div>
-        </section>
-    </main>
+              Browser->>Browser: Generate temporary AES key
+              Browser->>Browser: Encrypt text with AES key
+              Browser->>Browser: Encrypt AES key with Server’s RSA public key
+              Browser->>Server: Send [Encrypted Text + Encrypted AES Key + IV]
 
-    <script src="js/main.js"></script>
+              Server->>Server: Decrypt AES key with private RSA key
+              Server->>Server: Decrypt text using AES key
+              Server->>Server: Perform AI Analysis
+              Server->>Server: Re-encrypt results with same AES key
+              Server->>Browser: Return encrypted results
+              Browser->>Browser: Decrypt with local AES key
+              Browser->>Browser: Display results securely
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accuracy & Transparency Section -->
+    <section class="section">
+      <h2 class="section-title">
+        How We Achieve <span>High Accuracy</span>
+      </h2>
+      <p class="section-subtitle">
+        Our strength lies in layered intelligence — not a single model, but a
+        coordinated network of insights.
+      </p>
+
+      <div class="card-grid">
+        <div class="glass-card scroll-reveal">
+          <div class="card-icon">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <h3 class="card-title">1. Overall Classification</h3>
+          <p class="card-description">
+            A deep classifier model scans the full text for AI patterns,
+            establishing a strong probabilistic foundation.
+          </p>
+        </div>
+
+        <div class="glass-card scroll-reveal">
+          <div class="card-icon">
+            <i class="fa-solid fa-highlighter"></i>
+          </div>
+          <h3 class="card-title">2. Sentence-Level Highlighting</h3>
+          <p class="card-description">
+            Sentence-by-sentence evaluation highlights likely AI-generated
+            regions, revealing the structure and tone differences.
+          </p>
+        </div>
+
+        <div class="glass-card scroll-reveal">
+          <div class="card-icon">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <h3 class="card-title">3. Deep Linguistic Analysis</h3>
+          <p class="card-description">
+            We measure human writing “vital signs”: Perplexity, Burstiness,
+            Readability, and Lexical Richness — ensuring transparent,
+            data-driven accuracy.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
