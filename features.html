@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - OSA AI Detector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation (Same as index.html, but with "Features" active) -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">OSA Detector</a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="features.html" class="nav-link active">Features</a></li>
+            </ul>
+            <a href="detector.html" class="btn btn-primary">Launch Detector <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <main style="padding-top: 100px;">
+        <!-- Security Section -->
+        <section class="section">
+            <h2 class="section-title">Your Privacy, Encrypted</h2>
+            <p class="section-subtitle">We engineered a system where privacy isn't a feature—it's the foundation.</p>
+            <div class="glass-card">
+                 <div class="card-content" style="text-align:center;">
+                    <i class="fa-solid fa-lock" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h3 class="card-title">End-to-End Encryption Explained</h3>
+                    <p>When you submit text, a complex security process begins instantly. Your browser generates a temporary, secret key (AES) to encrypt your text. This secret key is then encrypted using our public key (RSA). Only our server, with its matching private key, can unlock the secret key to analyze your text. The results are then re-encrypted with the same secret key and sent back. At no point is your raw text transmitted or stored in a readable format.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Accuracy & Transparency Section -->
+        <section class="section">
+            <h2 class="section-title">How We Achieve High Accuracy</h2>
+            <p class="section-subtitle">A single model is not enough. Our strength lies in our multi-layered analysis.</p>
+            <div class="card-grid">
+                <div class="glass-card scroll-reveal">
+                    <h3 class="card-title">1. Overall Classification</h3>
+                    <p class="card-description">First, a powerful classifier model reads the entire text to provide a holistic AI probability score. This gives a strong baseline for the analysis.</p>
+                </div>
+                <div class="glass-card scroll-reveal">
+                    <h3 class="card-title">2. Sentence-Level Highlighting</h3>
+                    <p class="card-description">Next, we scan sentence by sentence, highlighting passages that are likely AI-generated versus human. This reveals the texture of the writing.</p>
+                </div>
+                <div class="glass-card scroll-reveal">
+                    <h3 class="card-title">3. Deep Linguistic Analysis</h3>
+                    <p class="card-description">Finally, we measure the vital signs of human writing: Perplexity (randomness), Variation (burstiness), Readability, and Lexical Richness. These metrics provide transparent, data-driven insights that contribute to the final score, which you can see in your results.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
