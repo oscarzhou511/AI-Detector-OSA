@@ -6,6 +6,7 @@
     <title>Features - OSA AI Detector</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
     <!-- Navigation (Same as index.html, but with "Features" active) -->
@@ -22,17 +23,96 @@
 
     <main style="padding-top: 100px;">
         <!-- Security Section -->
-        <section class="section">
-            <h2 class="section-title">Your Privacy, Encrypted</h2>
-            <p class="section-subtitle">We engineered a system where privacy isn't a feature—it's the foundation.</p>
-            <div class="glass-card">
-                 <div class="card-content" style="text-align:center;">
-                    <i class="fa-solid fa-lock" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
-                    <h3 class="card-title">End-to-End Encryption Explained</h3>
-                    <p>When you submit text, a complex security process begins instantly. Your browser generates a temporary, secret key (AES) to encrypt your text. This secret key is then encrypted using our public key (RSA). Only our server, with its matching private key, can unlock the secret key to analyze your text. The results are then re-encrypted with the same secret key and sent back. At no point is your raw text transmitted or stored in a readable format.</p>
+        <!-- START OF REPLACEMENT FOR features.html -->
+
+    <main style="padding-top: 100px;">
+        <!-- Security Section -->
+        <section id="security" class="section">
+            <h2 class="section-title">Our Foundation: Uncompromising Privacy</h2>
+            <p class="section-subtitle">
+                As outlined in our research, providing a secure and private tool is paramount. While the ultimate goal is on-device processing, our web-based tool uses a state-of-the-art hybrid encryption system to ensure your data's privacy is never compromised.
+            </p>
+            <div class="glass-card" style="padding: 2rem 2.5rem;">
+                 <div class="card-content">
+                    <div style="text-align:center; margin-bottom: 2rem;">
+                        <i class="fa-solid fa-lock" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                        <h3 class="card-title">Hybrid Encryption: Security You Don't Have to Think About</h3>
+                        <p>When you submit text for analysis, it never leaves your browser in a readable format. We use a "double-lock" system (RSA and AES hybrid encryption) to guarantee that only you and our secure server can ever access the content, for the brief moment it's being analyzed.</p>
+                    </div>
+
+                    <h4 style="margin-bottom: 1rem; font-size: 1.5rem; color: var(--dark-color);">How It Works: A Conceptual View</h4>
+                    <p style="margin-bottom: 2rem;">Think of it like sending a valuable item in a locked box. You lock the box (AES encryption), but then you put the key to that box inside a special, indestructible envelope that only our server can open (RSA encryption). Both are sent together, but neither can be compromised.</p>
+                    
+                    <!-- Mermaid Diagram 1 -->
+                    <div class="mermaid" style="margin-bottom: 3rem;">
+                        graph TD
+                            subgraph User's Browser
+                                A[Your Raw Text] -->|1. Locked with a temporary<br>secret key (AES)| B(Encrypted Text);
+                                C[Temporary Secret Key] -->|2. The secret key itself is locked<br>with our Public Key (RSA)| D(Encrypted Secret Key);
+                            end
+
+                            subgraph "Secure Transmission (Internet)"
+                                B --> E;
+                                D --> E[Secure Payload];
+                            end
+
+                            subgraph Server
+                                E --> F{Analysis Server};
+                                F -->|3. Our Private Key unlocks<br>the secret key| G[Temporary Secret Key];
+                                F -->|4. The secret key unlocks<br>the text for analysis| H(Your Raw Text<br><em>in memory only</em>);
+                                H --> I[AI Detection Models];
+                                I --> J[Analysis Results];
+                                J -->|5. Results are re-locked with<br>the same secret key| K(Encrypted Results);
+                            end
+
+                            subgraph "Secure Transmission (Internet)"
+                                K --> L[Secure Response];
+                            end
+                            
+                            subgraph User's Browser
+                                L --> M{Your Browser};
+                                M -->|6. Original secret key unlocks the results| N[Final Results Displayed];
+                            end
+
+                            style B fill:#f9f,stroke:#333,stroke-width:2px
+                            style D fill:#f9f,stroke:#333,stroke-width:2px
+                            style K fill:#ccf,stroke:#333,stroke-width:2px
+                    </div>
+                    
+                    <h4 style="margin-bottom: 1rem; font-size: 1.5rem; color: var(--dark-color);">The Technical Deep-Dive</h4>
+                    <p style="margin-bottom: 2rem;">The entire request-response cycle is end-to-end encrypted. The temporary key used to encrypt and decrypt your data is generated in your browser, and the unencrypted version of it is never transmitted.</p>
+
+                    <!-- Mermaid Diagram 2 -->
+                    <div class="mermaid">
+                        sequenceDiagram
+                            participant Browser
+                            participant Server
+
+                            Note over Browser: Security process starts before<br>any data is sent.
+                            Browser->>Browser: 1. Generate a temporary, one-time AES secret key.
+                            Browser->>Browser: 2. Encrypt the user's text using this AES key.
+                            Browser->>Browser: 3. Encrypt the AES key itself using the Server's Public Key (RSA).
+
+                            Browser->>Server: 4. Send [Encrypted Text + Encrypted AES Key + IV]
+                            
+                            Note over Server: Server receives the payload.<br>The raw text is unreadable.
+                            Server->>Server: 5. Use its unique Private Key to decrypt the AES key.
+                            Server->>Server: 6. Use the now-revealed AES key to decrypt the text.
+                            
+                            Note over Server: Text is held in memory only during analysis.
+                            Server->>Server: 7. Perform AI analysis on the plain text.
+                            
+                            Server->>Server: 8. Re-encrypt the analysis results with the same AES key.
+                            Server->>Browser: 9. Send back [Encrypted Results + new IV].
+
+                            Note over Browser: Browser uses the key it never sent.
+                            Browser->>Browser: 10. Decrypt results with the original AES key.
+                            Browser->>Browser: 11. Display analysis to the user.
+                    </div>
                 </div>
             </div>
         </section>
+    <!-- END OF REPLACEMENT FOR features.html -->
 
         <!-- Accuracy & Transparency Section -->
         <section class="section">
