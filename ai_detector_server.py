@@ -387,6 +387,85 @@ class AIRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if decrypted_text is not None:
                     print("Clearing decrypted text from memory.")
                     decrypted_text = None
+
+        elif self.path == '/quota':
+            conn = None
+            try:
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+                body = json.loads(post_data)
+
+                # --- 1. AUTHENTICATION ---
+                id_token_str = body.get('token')
+                if not id_token_str:
+                    raise ValueError("Request is missing authentication token.")
+                
+                print("Quota request received. Verifying token...")
+                try:
+                    idinfo = id_token.verify_oauth2_token(id_token_str, requests.Request(), GOOGLE_CLIENT_ID)
+                    google_id = idinfo['sub']
+                    email = idinfo['email']
+                    print(f"✅ Token verified for user: {email}")
+                except ValueError as e:
+                    print(f"❌ Token verification failed: {e}")
+                    self.send_response(HTTPStatus.UNAUTHORIZED)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': 'Invalid authentication token.'}).encode('utf-8'))
+                    return
+                
+                # --- 2. FETCH QUOTA INFO FROM DB ---
+                print("Fetching quota information...")
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                today_str = date.today().isoformat()
+                
+                cursor.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
+                user = cursor.fetchone()
+
+                is_unlimited = email.endswith(PEMBROKE_DOMAIN)
+                words_used_today = 0
+                
+                if user:
+                    if user['last_reset_date'] != today_str:
+                        print(f"New day for user {email}. Resetting quota.")
+                        cursor.execute("UPDATE users SET words_used_today = 0, last_reset_date = ? WHERE google_id = ?", (today_str, google_id))
+                        words_used_today = 0
+                    else:
+                        words_used_today = user['words_used_today']
+                else:
+                    print(f"New user: {email}. Creating database entry.")
+                    cursor.execute("INSERT INTO users (google_id, email, last_reset_date) VALUES (?, ?, ?)", (google_id, email, today_str))
+
+                conn.commit()
+                
+                quota_info = {
+                    'words_used_today': words_used_today,
+                    'daily_limit': DAILY_WORD_LIMIT,
+                    'is_unlimited': is_unlimited
+                }
+
+                # --- 3. SEND RESPONSE ---
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(quota_info).encode('utf-8'))
+                print("✅ Quota info sent successfully.")
+
+            except Exception as e:
+                    print(f"Error processing quota request: {e}")
+                    self.send_response(HTTPStatus.BAD_REQUEST)
+                    self.send_header('Content-type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    error_payload = {'error': f"An error occurred on the server: {type(e).__name__}"}
+                    self.wfile.write(json.dumps(error_payload).encode('utf-8'))
+                finally:
+                    if conn:
+                        conn.close()
+        
         else:
             self.send_response(HTTPStatus.NOT_FOUND)
             self.end_headers()
