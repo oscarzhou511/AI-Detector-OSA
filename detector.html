@@ -10,6 +10,7 @@
 </head>
 <body>
     <!-- Navigation (Same as other pages) -->
+    <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-brand">OSA Detector</a>
@@ -17,14 +18,20 @@
                 <li><a href="index.html" class="nav-link">Home</a></li>
                 <li><a href="features.html" class="nav-link">Features</a></li>
             </ul>
-            <!-- User info will be shown here after login -->
-            <div id="user-info" style="display: none;">
-                 <span id="user-email" class="nav-link"></span>
-                 <button id="signout-button" class="btn btn-secondary">Sign Out</button>
+            
+            <!-- User info section -->
+            <div id="user-info" class="nav-links" style="display: none; gap: 1rem;">
+                 <!-- The user's email -->
+                 <span id="user-email" class="nav-link" style="background: rgba(39, 165, 255, 0.1);"></span>
+                 
+                 <!-- FIX: Add the missing user-quota element -->
+                 <span id="user-quota" class="nav-link" style="background: rgba(255, 255, 255, 0.1);">0 / 1000 words</span>
+    
+                 <!-- The sign-out button -->
+                 <button id="signout-button" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Sign Out</button>
             </div>
         </div>
     </nav>
-
     <main class="container detector-container">
 
         <!-- Login View -->
