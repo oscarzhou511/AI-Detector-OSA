@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- (Same head content as before, including Google GSI client script) -->
+    <title>AI Detector Tool</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation (Same as other pages) -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">OSA Detector</a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="features.html" class="nav-link">Features</a></li>
+            </ul>
+            <!-- User info will be shown here after login -->
+            <div id="user-info" style="display: none;">
+                 <span id="user-email" class="nav-link"></span>
+                 <button id="signout-button" class="btn btn-secondary">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container detector-container">
+
+        <!-- Login View -->
+        <div id="login-view" class="glass-card" style="text-align:center; padding: 3rem;">
+            <h2 class="card-title">Welcome to the Detector</h2>
+            <p class="card-description" style="margin-bottom: 2rem;">Please sign in with your Google account to begin. Regular users get 1000 words per day free.</p>
+            <div id="google-signin-button" style="display: inline-block;"></div>
+        </div>
+
+        <!-- App View (hidden until login) -->
+        <div id="app-view" style="display: none;">
+            <div class="glass-card input-card">
+                <textarea id="text-input" placeholder="Paste your text here for analysis... (minimum 50 characters)"></textarea>
+                <div class="controls">
+                    <div id="word-count">0 words</div>
+                    <button id="check-button" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Text</button>
+                </div>
+            </div>
+            <div id="error-message" class="glass-card" style="display:none; color: #ff527a; border-color: #ff527a;"></div>
+
+            <!-- Results -->
+            <div id="results-area" class="results-area">
+                <div class="glass-card" style="text-align:center;">
+                    <h3 class="card-title">Analysis Complete</h3>
+                    <!-- Simplified Summary Here -->
+                    <h1 class="hero-title" style="margin: 1rem 0;"><span id="overall-score">0%</span> <span class="accent-gradient">Human Score</span></h1>
+                    <p id="summary-text">The analysis is complete.</p>
+                </div>
+                
+                <div class="card-grid">
+                     <!-- Linguistic Metrics Cards -->
+                     <div id="stat-card-perplexity" class="glass-card">...</div>
+                     <div id="stat-card-variation" class="glass-card">...</div>
+                     <div id="stat-card-readability" class="glass-card">...</div>
+                     <div id="stat-card-lexical" class="glass-card">...</div>
+                     <!-- (Structure these cards as in your original file but styled as glass-cards) -->
+                </div>
+                
+                <div class="glass-card">
+                    <h3 class="card-title">Highlighted Text Analysis</h3>
+                    <div id="highlighted-text" style="line-height: 1.8; max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="js/detector.js"></script>
+</body>
+</html>
