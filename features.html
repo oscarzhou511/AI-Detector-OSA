@@ -45,35 +45,45 @@
                     
                     <!-- Mermaid Diagram 1 -->
                     <div class="mermaid" style="margin-bottom: 3rem;">
-                        graph TD
-                            subgraph User's Browser
-                                A[Your Raw Text] -->|1. Locked with a temporary<br>secret key (AES)| B(Encrypted Text);
-                                C[Temporary Secret Key] -->|2. The secret key itself is locked<br>with our Public Key (RSA)| D(Encrypted Secret Key);
-                            end
-
-                            subgraph "Secure Transmission (Internet)"
-                                B --> E;
-                                D --> E[Secure Payload];
-                            end
-
-                            subgraph Server
-                                E --> F{Analysis Server};
-                                F -->|3. Our Private Key unlocks<br>the secret key| G[Temporary Secret Key];
-                                F -->|4. The secret key unlocks<br>the text for analysis| H(Your Raw Text<br><em>in memory only</em>);
-                                H --> I[AI Detection Models];
-                                I --> J[Analysis Results];
-                                J -->|5. Results are re-locked with<br>the same secret key| K(Encrypted Results);
-                            end
-
-                            subgraph "Secure Transmission (Internet)"
-                                K --> L[Secure Response];
-                            end
-                            
-                            subgraph User's Browser
-                                L --> M{Your Browser};
-                                M -->|6. Original secret key unlocks the results| N[Final Results Displayed];
-                            end
-
+                        flowchart TD
+                         subgraph subGraph0["User's Browser"]
+                                B["Encrypted Text"]
+                                A["Your Raw Text"]
+                                D["Encrypted Secret Key"]
+                                C["Temporary Secret Key"]
+                          end
+                         subgraph subGraph1["Secure Transmission (Internet)"]
+                                E["Secure Payload"]
+                          end
+                         subgraph Server["Server"]
+                                F{"Analysis Server"}
+                                G["Temporary Secret Key"]
+                                H["Your Raw Text in memory only"]
+                                I["AI Detection Models"]
+                                J["Analysis Results"]
+                                K["Encrypted Results"]
+                          end
+                         subgraph subGraph3["Secure Transmission (Internet)"]
+                                L["Secure Response"]
+                          end
+                         subgraph subGraph4["User's Browser"]
+                                M{"Your Browser"}
+                                N["Final Results Displayed"]
+                          end
+                            A -- Locked with a temporary secret key --> B
+                            C -- The secret key itself is locked with our Public Key --> D
+                            B --> E
+                            D --> E
+                            E --> F
+                            F -- Our Private Key unlocks the secret key --> G
+                            F -- The secret key unlocks the text for analysis --> H
+                            H --> I
+                            I --> J
+                            J -- "Results are re-locked with the same secret key" --> K
+                            K --> L
+                            L --> M
+                            M -- Original secret key unlocks the results --> N
+                        
                             style B fill:#f9f,stroke:#333,stroke-width:2px
                             style D fill:#f9f,stroke:#333,stroke-width:2px
                             style K fill:#ccf,stroke:#333,stroke-width:2px
