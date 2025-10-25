@@ -4,25 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Content Detector</title>
-    <!-- NOTE: The meta tag for client_id is no longer used by the new library -->
+    <title>AI Content Detector - OSA AI Detector</title>
+    
+    <!-- Scripts required for functionality -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- JSEncrypt library for RSA key encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    
+    <!-- Stylesheets for new site design -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Specific styles for complex components from the original detector page to ensure functionality -->
     <style>
+        /* These styles are kept to ensure the detailed stats dashboard renders correctly without modifying the global CSS file. */
         :root {
-            --bg-color: #12121f;
-            --surface-color: #1e1e32;
-            --primary-color: #8a42ff;
-            --primary-glow: rgba(138, 66, 255, 0.4);
-            --secondary-color: #4b4b7f;
-            --text-color: #e0e0e0;
-            --text-muted-color: #a0a0c0;
-            --border-color: #33334d;
+            /* Using colors from the new style.css for consistency */
+            --bg-color: var(--dark-color);
+            --surface-color: var(--glass-bg);
+            --primary-color: #27a5ff; /* Maintained primary from new theme */
+            --primary-glow: rgba(39, 165, 255, 0.2);
+            --secondary-color: #32ef8a; /* Maintained secondary from new theme */
+            --text-color: #1a202c; /* Dark text for light theme */
+            --text-muted-color: rgba(26, 32, 44, 0.7);
+            --border-color: var(--glass-border);
             --ai-highlight: rgba(255, 82, 122, 0.15);
             --ai-highlight-border: #ff527a;
             --human-highlight: rgba(29, 201, 164, 0.15);
@@ -32,133 +36,67 @@
             --rating-low: #ff527a;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .header {
+        /* Login view styling */
+        #login-view {
             text-align: center;
+            max-width: 600px;
+            margin: auto;
+            padding-top: 5rem;
         }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #e0e0e0, #a0a0c0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+        #login-view h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-family: var(--font-display);
         }
-
-        .header p {
+        #login-view p {
             color: var(--text-muted-color);
-            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        #google-signin-button {
+            display: inline-block;
+            margin-top: 1rem;
         }
 
-        .card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .input-area {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 250px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            color: var(--text-color);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            resize: vertical;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px var(--primary-glow);
-        }
-
-        .controls {
+        /* User info bar styling */
+        .user-info-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem; /* Adjusted padding to better fit the glass-card style */
         }
-
-        #word-count {
-            color: var(--text-muted-color);
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-            background-color: var(--bg-color);
-            border-radius: 20px;
-        }
-
-        #check-button {
+        .user-details,
+        .quota-details {
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(90deg, var(--primary-color), #a066ff);
-            border: none;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .user-details span:first-child,
+        .quota-details span:first-child {
+            font-size: 0.8rem;
+            color: var(--text-muted-color);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        #signout-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted-color);
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px var(--primary-glow);
+            transition: var(--transition-smooth);
+        }
+        #signout-button:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            background-color: rgba(39, 165, 255, 0.1);
         }
 
-        #check-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--primary-glow);
-        }
-
-        #check-button:disabled {
-            background: var(--secondary-color);
-            cursor: not-allowed;
-            opacity: 0.7;
-            box-shadow: none;
-        }
-
+        /* Spinner for the button */
         .spinner {
             width: 18px;
             height: 18px;
@@ -167,464 +105,228 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin {
-            to {
-                transform: rotate(3060deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
+        /* Results area styling */
         #results-area {
             display: none;
-            flex-direction: column;
-            gap: 1rem;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
-
         #results-area.visible {
-            display: flex;
+            display: block; /* Use block instead of flex */
             opacity: 1;
             transform: translateY(0);
         }
-
         .summary-grid {
             display: grid;
             grid-template-columns: auto 1fr;
             align-items: center;
             gap: 2rem;
+            margin-bottom: 2rem;
         }
-
-        .progress-circle {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
         .progress-circle svg {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             transform: rotate(-90deg);
+            position: absolute;
+            top: 0;
+            left: 0;
         }
+        .progress-circle circle { fill: none; stroke-width: 10; }
+        .progress-bg { stroke: rgba(39, 165, 255, 0.1); }
+        .progress-bar { stroke: var(--primary-color); stroke-linecap: round; transition: stroke-dashoffset 1s ease-out; }
+        .progress-text { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #overall-score { font-size: 2.5rem; font-weight: 700; color: var(--text-color); }
+        .progress-label { font-size: 0.8rem; color: var(--text-muted-color); text-transform: uppercase; }
+        .stats h3 { font-size: 1.5rem; margin-bottom: 0.5rem; font-family: var(--font-display); }
+        .stats p { color: var(--text-muted-color); }
 
-        .progress-circle circle {
-            fill: none;
-            stroke-width: 10;
-        }
-
-        .progress-bg {
-            stroke: var(--bg-color);
-        }
-
-        .progress-bar {
-            stroke: var(--primary-color);
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1s ease-out;
-        }
-
-        .progress-text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-
-        #overall-score {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-color);
-        }
-
-        .progress-label {
-            font-size: 0.8rem;
-            color: var(--text-muted-color);
-            text-transform: uppercase;
-        }
-
-        .stats {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .stats h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stats p {
-            color: var(--text-muted-color);
-        }
-
+        /* Stats Dashboard styling */
         .stats-dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1rem;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
             border-top: 1px solid var(--border-color);
         }
+        .stat-card { background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid transparent; cursor: help; transition: var(--transition-smooth); }
+        .stat-card:hover { border-color: var(--primary-color); transform: translateY(-3px); }
+        .stat-label { font-size: 0.9rem; color: var(--text-muted-color); }
+        .stat-rating { font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; float: right; }
+        .stat-rating.high { color: #fff; background-color: var(--rating-high); }
+        .stat-rating.medium { color: var(--bg-color); background-color: var(--rating-medium); }
+        .stat-rating.low { color: #fff; background-color: var(--rating-low); }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--primary-color); margin: 0.75rem 0; }
+        .gauge-container { background-color: rgba(0,0,0,0.1); border-radius: 4px; height: 8px; overflow: hidden; }
+        .gauge-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease-out; }
+        .gauge-bar.high { background-color: var(--rating-high); }
+        .gauge-bar.medium { background-color: var(--rating-medium); }
+        .gauge-bar.low { background-color: var(--rating-low); }
+        
+        /* Highlighted text output styling */
+        .text-output-container { margin-top: 2rem; }
+        .legend { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1rem; font-size: 0.9rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .legend-color { width: 15px; height: 15px; border-radius: 3px; }
+        .text-output { background-color: rgba(255,255,255,0.2); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; line-height: 1.8; font-size: 1rem; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+        .text-output span { padding: 2px 0; border-radius: 3px; }
 
-        .stat-card {
-            background: var(--bg-color);
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            cursor: help;
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-muted-color);
-        }
-
-        .stat-rating {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .stat-rating.high {
-            color: #fff;
-            background-color: var(--rating-high);
-        }
-
-        .stat-rating.medium {
-            color: var(--bg-color);
-            background-color: var(--rating-medium);
-        }
-
-        .stat-rating.low {
-            color: #fff;
-            background-color: var(--rating-low);
-        }
-
-        .stat-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.75rem;
-        }
-
-        .gauge-container {
-            background-color: var(--secondary-color);
-            border-radius: 4px;
-            height: 8px;
-            overflow: hidden;
-        }
-
-        .gauge-bar {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease-out;
-        }
-
-        .gauge-bar.high {
-            background-color: var(--rating-high);
-        }
-
-        .gauge-bar.medium {
-            background-color: var(--rating-medium);
-        }
-
-        .gauge-bar.low {
-            background-color: var(--rating-low);
-        }
-
-        .text-output-container {
-            margin-top: 1rem;
-        }
-
-        .text-output {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            line-height: 1.8;
-            font-size: 1rem;
-            max-height: 400px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-
-        .text-output span {
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-
-        .ai-text {
-            background-color: var(--ai-highlight);
-            border-bottom: 2px solid var(--ai-highlight-border);
-        }
-
-        .human-text {
-            background-color: var(--human-highlight);
-            border-bottom: 2px solid var(--human-highlight-border);
-        }
-
-        .legend {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .legend-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-        }
-
+        /* Error Message */
         #error-message {
-            color: var(--ai-highlight-border);
+            color: var(--rating-low);
             background-color: var(--ai-highlight);
-            border: 1px solid var(--ai-highlight-border);
+            border: 1px solid var(--rating-low);
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
             display: none;
+            margin-top: 2rem;
         }
 
-        #login-view {
-            text-align: center;
-            padding: 4rem 2rem;
-            max-width: 500px;
-            margin: auto;
-        }
-
-        #login-view h2 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        #login-view p {
-            color: var(--text-muted-color);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        #google-signin-button {
-            display: inline-block;
-            margin-top: 1rem;
-        }
-
-        .user-info-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .user-details,
-        .quota-details {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .user-details span:first-child,
-        .quota-details span:first-child {
-            font-size: 0.8rem;
-            color: var(--text-muted-color);
-            text-transform: uppercase;
-        }
-
-        .user-details span:last-child,
-        .quota-details span:last-child {
-            font-weight: 500;
-        }
-
-        #signout-button {
-            padding: 0.5rem 1rem;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text-muted-color);
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        #signout-button:hover {
-            color: var(--text-color);
-            border-color: var(--primary-color);
-        }
-
+        /* Responsive adjustments */
         @media (max-width: 600px) {
-            body {
-                padding: 1rem 0.5rem;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .card {
-                padding: 1.5rem;
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 1rem;
-            }
-
-            .progress-circle {
-                margin: 0 auto;
-            }
+            .summary-grid { grid-template-columns: 1fr; text-align: center; gap: 1rem; }
+            .progress-circle { margin: 0 auto; }
+            .user-info-bar { justify-content: center; text-align: center; }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header class="header">
-            <h1><i class="fa-solid fa-robot" style="color: var(--primary-color);"></i> Efficient AI Text Detector</h1>
-            <p>Fully Private, Efficient, and Accurate</p>
-        </header>
 
-        <div id="login-view">
-            <div class="card">
-                <h2>Welcome!</h2>
-                <p>Please sign in with your Google account to use the detector. Regular users receive 1000 words per day
-                    for free. Teachers and staff from Pembroke School receive unlimited access.</p>
-                <div id="google-signin-button"></div>
+    <!-- Loading Spinner (from index.html) -->
+    <div class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Navigation (from index.html) -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">OSA Detector</a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="features.html" class="nav-link">Features</a></li>
+            </ul>
+            <!-- This button is styled as active/current page -->
+            <a href="detector.html" class="btn btn-primary">Launch Detector <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="section detector-container">
+            <div class="container">
+
+                <div id="login-view">
+                    <div class="glass-card">
+                        <h2>Welcome!</h2>
+                        <p>Please sign in with your Google account to use the detector. Regular users receive 1000 words per day for free. Teachers and staff from Pembroke School receive unlimited access.</p>
+                        <div id="google-signin-button"></div>
+                    </div>
+                </div>
+        
+                <div id="app-view" style="display: none;">
+                    <div class="user-info-bar glass-card">
+                        <div class="user-details">
+                            <span>Logged In As</span>
+                            <span id="user-email"></span>
+                        </div>
+                        <div class="quota-details">
+                            <span>Daily Usage</span>
+                            <span id="user-quota">0 / 1000 words</span>
+                        </div>
+                        <button id="signout-button">Sign Out</button>
+                    </div>
+
+                    <div class="input-card glass-card">
+                        <textarea id="text-input" placeholder="Paste your text here... A minimum of 300 words is recommended for the most accurate scan."></textarea>
+                        <div class="controls">
+                            <div id="word-count">0 words</div>
+                            <button id="check-button" class="btn btn-primary">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> 
+                                <span id="button-text">Analyze Text</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="error-message"></div>
+        
+                    <div id="results-area" class="glass-card">
+                        <div class="summary-grid">
+                            <div class="progress-circle">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle id="progress-bar" class="progress-bar" cx="50" cy="50" r="45" stroke-dasharray="282.7" stroke-dashoffset="282.7"></circle>
+                                </svg>
+                                <div class="progress-text">
+                                    <span id="overall-score">0%</span>
+                                    <span class="progress-label">Human Score</span>
+                                </div>
+                            </div>
+                            <div class="stats">
+                                <h3>Analysis Summary</h3>
+                                <p id="summary-text">The analysis is complete.</p>
+                            </div>
+                        </div>
+        
+                        <div class="stats-dashboard">
+                            <div id="stat-card-perplexity" class="stat-card" title="Perplexity measures the randomness or unpredictability of text. Lower scores are common for AI, while higher scores suggest more complex, human-like expression.">
+                                <span class="stat-label">Perplexity</span><span class="stat-rating"></span>
+                                <div class="stat-value">0</div>
+                                <div class="gauge-container"><div class="gauge-bar"></div></div>
+                            </div>
+                            <div id="stat-card-variation" class="stat-card" title="Also called 'Burstiness', this measures the variation in sentence length. Humans tend to vary their sentence length more than AI models.">
+                                <span class="stat-label">Variation</span><span class="stat-rating"></span>
+                                <div class="stat-value">0</div>
+                                <div class="gauge-container"><div class="gauge-bar"></div></div>
+                            </div>
+                            <div id="stat-card-readability" class="stat-card" title="Estimates the educational grade level needed to understand the text. AI often targets a mid-range (9-12), while human writing can be simpler or more complex.">
+                                <span class="stat-label">Readability Grade</span><span class="stat-rating"></span>
+                                <div class="stat-value">0</div>
+                                <div class="gauge-container"><div class="gauge-bar"></div></div>
+                            </div>
+                            <div id="stat-card-lexical" class="stat-card" title="Measures vocabulary richness (unique words / total words). Higher values indicate a more diverse vocabulary.">
+                                <span class="stat-label">Lexical Richness</span><span class="stat-rating"></span>
+                                <div class="stat-value">0</div>
+                                <div class="gauge-container"><div class="gauge-bar"></div></div>
+                            </div>
+                        </div>
+        
+                        <div class="text-output-container">
+                            <div class="legend">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background-color: var(--human-highlight-border);"></div>
+                                    <span>Likely Human</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background-color: var(--ai-highlight-border);"></div>
+                                    <span>Likely AI</span>
+                                </div>
+                            </div>
+                            <div id="highlighted-text" class="text-output"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <main id="app-view" style="display: none;">
-            <div class="user-info-bar">
-                <div class="user-details">
-                    <span>Logged In As</span>
-                    <span id="user-email"></span>
-                </div>
-                <div class="quota-details">
-                    <span>Daily Usage</span>
-                    <span id="user-quota">0 / 1000 words</span>
-                </div>
-                <button id="signout-button">Sign Out</button>
-            </div>
-            <div class="card">
-                <div class="input-area">
-                    <textarea id="text-input"
-                        placeholder="Paste your text here... It is recommended to have a minimum of 300 words for an accurate scan."></textarea>
-                    <div class="controls">
-                        <div id="word-count">0 words</div>
-                        <button id="check-button"><i class="fa-solid fa-wand-magic-sparkles"></i> <span
-                                id="button-text">Analyze Text</span></button>
-                    </div>
-                </div>
-            </div>
-            <div id="error-message"></div>
-
-            <div id="results-area" class="card">
-                <div class="summary-grid">
-                    <div class="progress-circle">
-                        <svg viewBox="0 0 100 100">
-                            <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
-                            <circle id="progress-bar" class="progress-bar" cx="50" cy="50" r="45"
-                                stroke-dasharray="282.7" stroke-dashoffset="282.7"></circle>
-                        </svg>
-                        <div class="progress-text">
-                            <span id="overall-score">0%</span>
-                            <span class="progress-label">Human Score</span>
-                        </div>
-                    </div>
-                    <div class="stats">
-                        <h3>Analysis Summary</h3>
-                        <p id="summary-text">The analysis is complete.</p>
-                    </div>
-                </div>
-
-                <div class="stats-dashboard">
-                    <div id="stat-card-perplexity" class="stat-card"
-                        title="Perplexity measures the randomness or unpredictability of text. Lower scores are common for AI, while higher scores suggest more complex, human-like expression.">
-                        <div class="stat-header"><span class="stat-label">Perplexity</span><span
-                                class="stat-rating"></span></div>
-                        <div class="stat-value">0</div>
-                        <div class="gauge-container">
-                            <div class="gauge-bar"></div>
-                        </div>
-                    </div>
-                    <div id="stat-card-variation" class="stat-card"
-                        title="Also called 'Burstiness', this measures the variation in sentence length. Humans tend to vary their sentence length more than AI models.">
-                        <div class="stat-header"><span class="stat-label">Variation</span><span
-                                class="stat-rating"></span></div>
-                        <div class="stat-value">0</div>
-                        <div class="gauge-container">
-                            <div class="gauge-bar"></div>
-                        </div>
-                    </div>
-                    <div id="stat-card-readability" class="stat-card"
-                        title="Estimates the educational grade level needed to understand the text. AI often targets a mid-range (9-12), while human writing can be simpler or more complex.">
-                        <div class="stat-header"><span class="stat-label">Readability Grade</span><span
-                                class="stat-rating"></span></div>
-                        <div class="stat-value">0</div>
-                        <div class="gauge-container">
-                            <div class="gauge-bar"></div>
-                        </div>
-                    </div>
-                    <div id="stat-card-lexical" class="stat-card"
-                        title="Measures vocabulary richness (unique words / total words). Higher values indicate a more diverse vocabulary.">
-                        <div class="stat-header"><span class="stat-label">Lexical Richness</span><span
-                                class="stat-rating"></span></div>
-                        <div class="stat-value">0</div>
-                        <div class="gauge-container">
-                            <div class="gauge-bar"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-output-container">
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: var(--human-highlight-border);"></div>
-                            <span>Likely Human</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: var(--ai-highlight-border);"></div>
-                            <span>Likely AI</span>
-                        </div>
-                    </div>
-                    <div id="highlighted-text" class="text-output"></div>
-                </div>
-            </div>
-        </main>
-    </div>
+    </main>
+    
+    <!-- This script contains all the logic from the original detector.html and is UNCHANGED to preserve functionality -->
     <script>
+        // JS from the landing page for loading animation
+        window.addEventListener('load', function() {
+            const loading = document.querySelector('.loading');
+            loading.classList.add('fade-out');
+        });
+
+        // Main detector logic starts here
         document.addEventListener('DOMContentLoaded', () => {
-            const GOOGLE_CLIENT_ID = "810577671337-sctto8p3i003l9renmhhlv4fs2pg69ik.apps.googleusercontent.com"; // <-- PASTE YOUR CLIENT ID HERE
+            const GOOGLE_CLIENT_ID = "810577671337-sctto8p3i003l9renmhhlv4fs2pg69ik.apps.googleusercontent.com";
             const publicKey = `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2YlQJJaB9O3X91mYfk9z
 3U0Zt4oC95TXVV8omGmCpeNc53Z392oXhkrWkzUsae90BWO2ORqtT9e/+OMW2I9e
@@ -655,10 +357,10 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
             signOutButton.addEventListener('click', handleSignOut);
             textInput.addEventListener('input', () => {
                 const text = textInput.value.trim();
-                document.getElementById('word-count').textContent = `${text.split(/\s+/).filter(Boolean).length} words`;
+                const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+                document.getElementById('word-count').textContent = `${wordCount} words`;
             });
 
-            // This function is called by the Google GIS library after it loads
             window.onload = function () {
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
@@ -670,17 +372,13 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                         size: "large"
                     }
                 );
-                google.accounts.id.prompt(); // Also display the One Tap prompt
+                google.accounts.id.prompt();
             };
 
             function handleCredentialResponse(response) {
-                // The response.credential is the ID token (a JWT)
                 idToken = response.credential;
-
-                // Decode the JWT to get user info without needing a library
                 const payload = JSON.parse(atob(idToken.split('.')[1]));
                 const userEmail = payload.email;
-
                 userEmailEl.textContent = userEmail;
 
                 if (userEmail.endsWith('@pembroke.sa.edu.au')) {
@@ -697,17 +395,15 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
 
             function handleSignOut() {
                 idToken = null;
-                google.accounts.id.disableAutoSelect(); // Prevent auto-re-login
+                google.accounts.id.disableAutoSelect();
                 loginView.style.display = 'block';
                 appView.style.display = 'none';
             }
 
-            // --- Helper functions for encryption/decryption are unchanged ---
             function arrayBufferToBase64(buffer) {
                 let binary = '';
                 const bytes = new Uint8Array(buffer);
-                const len = bytes.byteLength;
-                for (let i = 0; i < len; i++) {
+                for (let i = 0; i < bytes.byteLength; i++) {
                     binary += String.fromCharCode(bytes[i]);
                 }
                 return window.btoa(binary);
@@ -738,26 +434,17 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 resultsArea.classList.remove('visible');
 
                 try {
-                    // --- HYBRID ENCRYPTION LOGIC (Unchanged) ---
-                    const aesKey = await window.crypto.subtle.generateKey({
-                        name: "AES-GCM",
-                        length: 256
-                    }, true, ["encrypt", "decrypt"]);
+                    const aesKey = await window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
                     const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                    const textEncoder = new TextEncoder();
-                    const encryptedTextBuffer = await window.crypto.subtle.encrypt({
-                        name: "AES-GCM",
-                        iv: iv
-                    }, aesKey, textEncoder.encode(rawText));
+                    const encryptedTextBuffer = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, aesKey, new TextEncoder().encode(rawText));
                     const exportedAesKeyBuffer = await window.crypto.subtle.exportKey("raw", aesKey);
                     const rsaEncrypt = new JSEncrypt();
                     rsaEncrypt.setPublicKey(publicKey);
                     const encryptedAesKey = rsaEncrypt.encrypt(arrayBufferToBase64(exportedAesKeyBuffer));
                     if (!encryptedAesKey) throw new Error("RSA encryption failed.");
 
-                    // --- Prepare payload with authentication token ---
                     const payload = {
-                        token: idToken, // Authenticate the user
+                        token: idToken,
                         encrypted_key: encryptedAesKey,
                         iv: arrayBufferToBase64(iv),
                         encrypted_text: arrayBufferToBase64(encryptedTextBuffer),
@@ -765,9 +452,7 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
 
                     const response = await fetch('https://ai-detect.oscarz.dev/detect', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -779,24 +464,16 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                         throw new Error(response_payload.error || 'Server Error');
                     }
 
-                    // --- DECRYPT THE RESPONSE (Unchanged) ---
                     const iv_response = base64ToArrayBuffer(response_payload.iv);
                     const encrypted_response = base64ToArrayBuffer(response_payload.encrypted_response);
-                    const decrypted_buffer = await window.crypto.subtle.decrypt({
-                        name: "AES-GCM",
-                        iv: iv_response
-                    }, aesKey, encrypted_response);
-                    const textDecoder = new TextDecoder();
-                    const decrypted_json_string = textDecoder.decode(decrypted_buffer);
-                    const final_results = JSON.parse(decrypted_json_string);
+                    const decrypted_buffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv_response }, aesKey, encrypted_response);
+                    const final_results = JSON.parse(new TextDecoder().decode(decrypted_buffer));
 
                     displayResults(final_results);
 
                 } catch (error) {
                     console.error('Analysis failed:', error);
-                    showError(
-                        `An error occurred: ${error.message}. Please check your daily word limit or try again later.`
-                    );
+                    showError(`An error occurred: ${error.message}. Please check your daily word limit or try again later.`);
                 } finally {
                     setLoadingState(false);
                 }
@@ -808,17 +485,19 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 const progressBar = document.getElementById('progress-bar');
                 const circumference = 2 * Math.PI * progressBar.r.baseVal.value;
                 progressBar.style.strokeDashoffset = circumference - (humanityScore / 100) * circumference;
+                
                 let summary = "The analysis suggests this text is likely human-written.";
                 if (humanityScore < 25) summary = "The analysis strongly suggests this text is AI-generated.";
-                else if (humanityScore < 60) summary =
-                    "This text shows a mix of human and AI-like characteristics.";
+                else if (humanityScore < 60) summary = "This text shows a mix of human and AI-like characteristics.";
                 document.getElementById('summary-text').textContent = summary;
+                
                 if (data.linguistics) {
                     updateStatCard('perplexity', data.linguistics.perplexity);
                     updateStatCard('variation', data.linguistics.sentence_length_variation);
                     updateStatCard('readability', data.linguistics.readability_grade);
                     updateStatCard('lexical', data.linguistics.lexical_richness);
                 }
+                
                 const highlightedTextEl = document.getElementById('highlighted-text');
                 highlightedTextEl.innerHTML = '';
                 (data.chunks || []).forEach(chunk => {
@@ -833,10 +512,7 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 }
 
                 resultsArea.classList.add('visible');
-                resultsArea.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+                resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             function updateQuotaDisplay(quotaInfo) {
@@ -847,7 +523,6 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 }
             }
 
-            // --- Other functions (updateStatCard, setLoadingState, etc.) are unchanged ---
             function updateStatCard(type, value) {
                 const card = document.getElementById(`stat-card-${type}`);
                 if (!card || value === null || value === undefined) return;
@@ -855,64 +530,24 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 const ratingEl = card.querySelector('.stat-rating');
                 const gaugeBarEl = card.querySelector('.gauge-bar');
                 valueEl.textContent = value;
-                let rating = {
-                    text: 'Medium',
-                    className: 'medium',
-                    gaugePercent: 50
-                };
+                let rating = { text: 'Medium', className: 'medium', gaugePercent: 50 };
                 switch (type) {
                     case 'perplexity':
-                        if (value > 150) rating = {
-                            text: 'High',
-                            className: 'high',
-                            gaugePercent: 90
-                        };
-                        else if (value < 60) rating = {
-                            text: 'Low',
-                            className: 'low',
-                            gaugePercent: 20
-                        };
+                        if (value > 150) rating = { text: 'High', className: 'high', gaugePercent: 90 };
+                        else if (value < 60) rating = { text: 'Low', className: 'low', gaugePercent: 20 };
                         break;
                     case 'variation':
-                        if (value > 6) rating = {
-                            text: 'High',
-                            className: 'high',
-                            gaugePercent: 90
-                        };
-                        else if (value < 3) rating = {
-                            text: 'Low',
-                            className: 'low',
-                            gaugePercent: 20
-                        };
+                        if (value > 6) rating = { text: 'High', className: 'high', gaugePercent: 90 };
+                        else if (value < 3) rating = { text: 'Low', className: 'low', gaugePercent: 20 };
                         break;
                     case 'readability':
-                        if (value < 8 || value > 13) rating = {
-                            text: 'Natural',
-                            className: 'high',
-                            gaugePercent: 75
-                        };
-                        else rating = {
-                            text: 'Common AI',
-                            className: 'low',
-                            gaugePercent: 30
-                        };
+                        if (value < 8 || value > 13) rating = { text: 'Natural', className: 'high', gaugePercent: 75 };
+                        else rating = { text: 'Common AI', className: 'low', gaugePercent: 30 };
                         break;
                     case 'lexical':
-                        if (value > 0.65) rating = {
-                            text: 'Rich',
-                            className: 'high',
-                            gaugePercent: 85
-                        };
-                        else if (value < 0.5) rating = {
-                            text: 'Simple',
-                            className: 'low',
-                            gaugePercent: 35
-                        };
-                        else rating = {
-                            text: 'Normal',
-                            className: 'medium',
-                            gaugePercent: 60
-                        };
+                        if (value > 0.65) rating = { text: 'Rich', className: 'high', gaugePercent: 85 };
+                        else if (value < 0.5) rating = { text: 'Simple', className: 'low', gaugePercent: 35 };
+                        else rating = { text: 'Normal', className: 'medium', gaugePercent: 60 };
                         break;
                 }
                 ratingEl.textContent = rating.text;
@@ -929,16 +564,15 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
             }
 
             function showError(message) {
-                document.getElementById('error-message').textContent = message;
-                document.getElementById('error-message').style.display = 'block';
+                const errorEl = document.getElementById('error-message');
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
             }
 
             function hideError() {
                 document.getElementById('error-message').style.display = 'none';
             }
-
         });
     </script>
 </body>
-
 </html>
