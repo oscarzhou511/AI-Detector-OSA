@@ -58,21 +58,23 @@
             <div id="error-message" class="glass-card" style="display:none; color: #ff527a; border-color: #ff527a;"></div>
 
             <!-- Results -->
-            <div id="results-area" class="results-area">
-                <div class="glass-card" style="text-align:center;">
-                    <h3 class="card-title">Analysis Complete</h3>
-                    <!-- Simplified Summary Here -->
-                    <h1 class="hero-title" style="margin: 1rem 0;"><span id="overall-score">0%</span> <span class="accent-gradient">Human Score</span></h1>
-                    <p id="summary-text">The analysis is complete.</p>
-                </div>
-                
-                <div class="card-grid">
-                     <!-- Linguistic Metrics Cards -->
-                     <div id="stat-card-perplexity" class="glass-card">...</div>
-                     <div id="stat-card-variation" class="glass-card">...</div>
-                     <div id="stat-card-readability" class="glass-card">...</div>
-                     <div id="stat-card-lexical" class="glass-card">...</div>
-                     <!-- (Structure these cards as in your original file but styled as glass-cards) -->
+            <div id="results-area" class="card">
+                <div class="summary-grid">
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
+                            <circle id="progress-bar" class="progress-bar" cx="50" cy="50" r="45"
+                                stroke-dasharray="282.7" stroke-dashoffset="282.7"></circle>
+                        </svg>
+                        <div class="progress-text">
+                            <span id="overall-score">0%</span>
+                            <span class="progress-label">Human Score</span>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <h3>Analysis Summary</h3>
+                        <p id="summary-text">The analysis is complete.</p>
+                    </div>
                 </div>
                 
                 <div class="glass-card">
