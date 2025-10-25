@@ -361,6 +361,32 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 document.getElementById('word-count').textContent = `${wordCount} words`;
             });
 
+            // NEW: Function to fetch user's quota from the server
+            async function fetchUserQuota() {
+                if (!idToken) return;
+
+                try {
+                    const response = await fetch('https://ai-detect.oscarz.dev/quota', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: idToken })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to fetch quota.');
+                    }
+                    
+                    const quotaInfo = await response.json();
+                    updateQuotaDisplay(quotaInfo);
+
+                } catch (error) {
+                    console.error('Could not fetch user quota:', error);
+                    // Provide a fallback display if the quota check fails
+                    updateQuotaDisplay({ is_unlimited: false, words_used_today: '?', daily_limit: 1000 });
+                }
+            }
+
             window.onload = function () {
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
@@ -381,11 +407,12 @@ FQSY1UWJZzwwEm7JhHRz3MsCAwEAAQ==
                 const userEmail = payload.email;
                 userEmailEl.textContent = userEmail;
 
+                // MODIFIED: Replace hardcoded quota with a fetch call
+                fetchUserQuota();
+
+                // Keep the alert for Pembroke users, as it's a helpful notification
                 if (userEmail.endsWith('@pembroke.sa.edu.au')) {
-                    updateQuotaDisplay({ is_unlimited: true });
                     setTimeout(() => alert("Teachers and Staff from Pembroke School have unlimited access to this service."), 100);
-                } else {
-                    updateQuotaDisplay({ is_unlimited: false, words_used_today: 0, daily_limit: 1000 });
                 }
 
                 loginView.style.display = 'none';
